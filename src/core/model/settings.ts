@@ -24,6 +24,19 @@ export type Site = z.infer<typeof SiteSchema>;
 export const ThemeSchema = z.enum(['dark', 'light', 'system']);
 export type Theme = z.infer<typeof ThemeSchema>;
 
+/** Accent color themes. The palettes themselves live in the UI layer. */
+export const ACCENT_IDS = [
+  'grape',
+  'ocean',
+  'fox',
+  'flamingo',
+  'indigo',
+  'owl',
+  'graphite',
+] as const;
+export const AccentSchema = z.enum(ACCENT_IDS);
+export type Accent = z.infer<typeof AccentSchema>;
+
 export const SettingsSchema = z
   .object({
     activeList: ListIdSchema,
@@ -63,6 +76,7 @@ export const SettingsSchema = z
       time: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'Reminder time must be HH:MM'),
     }),
     theme: ThemeSchema,
+    accent: AccentSchema,
   })
   .superRefine((s, ctx) => {
     if (s.minReviewsPerDay > s.dailyGoal)
@@ -92,4 +106,5 @@ export const DEFAULT_SETTINGS: Settings = {
   rolloverHour: 2,
   reminder: { enabled: false, time: '19:00' },
   theme: 'dark',
+  accent: 'grape',
 };

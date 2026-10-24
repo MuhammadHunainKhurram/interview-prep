@@ -264,7 +264,7 @@ export function SettingsPage() {
       </Card>
 
       <Card>
-        <CardTitle>Reminder & appearance</CardTitle>
+        <CardTitle>Reminder</CardTitle>
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="flex flex-col gap-2">
             <label className="flex items-center gap-2 text-sm font-bold">
@@ -286,21 +286,13 @@ export function SettingsPage() {
             />
             {fieldErrors.reminder && <FieldError message={fieldErrors.reminder} />}
           </div>
-          <fieldset>
-            <legend className="mb-1.5 text-sm font-bold">Theme</legend>
-            <div className="flex gap-2">
-              {(['dark', 'light', 'system'] as const).map((t) => (
-                <Choice
-                  key={t}
-                  checked={draft.theme === t}
-                  onChange={() => set('theme', t)}
-                  name="theme"
-                >
-                  {t[0]!.toUpperCase() + t.slice(1)}
-                </Choice>
-              ))}
-            </div>
-          </fieldset>
+          <p className="text-sm text-muted">
+            Colors and light or dark mode are in the{' '}
+            <a href="#/themes" className="font-bold text-accent-text hover:underline">
+              Themes
+            </a>{' '}
+            tab.
+          </p>
         </div>
         <p className="mt-4 text-sm text-muted">
           Keyboard shortcut:{' '}

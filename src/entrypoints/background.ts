@@ -1,5 +1,6 @@
 import { browser } from 'wxt/browser';
 import { createHandlers, dispatch } from '@/background/router';
+import { updateActionIcon } from '@/background/action-icon';
 import { TrackerService } from '@/background/tracker-service';
 import { systemClock } from '@/core/calendar/logical-day';
 import { getCatalog } from '@/core/catalog';
@@ -37,6 +38,14 @@ export default defineBackground(() => {
     await browser.alarms.create(ALARM_REMINDER, { when: next.getTime() });
   }
 
+  async function refreshIcon() {
+    await updateActionIcon((await service.getSettings()).accent);
+  }
+
+  async function afterSettingsChange() {
+    await Promise.all([scheduleReminder(), refreshIcon()]);
+  }
+
   async function ensureAlarms() {
     if (!(await browser.alarms.get(ALARM_HOUSEKEEPING)))
       await browser.alarms.create(ALARM_HOUSEKEEPING, { periodInMinutes: 60, delayInMinutes: 1 });
@@ -46,8 +55,8 @@ export default defineBackground(() => {
   const handlers = createHandlers({
     service,
     openDashboard,
-    onSettingsChanged: scheduleReminder,
-    onDataChanged: scheduleReminder,
+    onSettingsChanged: afterSettingsChange,
+    onDataChanged: afterSettingsChange,
   });
 
   browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
@@ -96,4 +105,6 @@ export default defineBackground(() => {
     if (reason === 'install') void openDashboard();
   });
   browser.runtime.onStartup.addListener(() => void ensureAlarms());
+  // The service worker starts often; keep the icon in sync each time.
+  void refreshIcon();
 });

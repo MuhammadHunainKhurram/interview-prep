@@ -143,6 +143,7 @@ export interface WidgetState {
   defaultPatterns: string[];
   preferredSite: Settings['preferredSite'];
   theme: Settings['theme'];
+  accent: Settings['accent'];
   toolbarPosition: ToolbarPosition | null;
 }
 

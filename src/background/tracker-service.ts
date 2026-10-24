@@ -332,6 +332,7 @@ export class TrackerService {
               : [],
         preferredSite: ctx.settings.preferredSite,
         theme: ctx.settings.theme,
+        accent: ctx.settings.accent,
         toolbarPosition: (await this.repos.uiPrefs.get()).toolbarPosition,
       };
     });

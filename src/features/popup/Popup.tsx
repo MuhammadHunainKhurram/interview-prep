@@ -9,7 +9,7 @@ import { TodayList, TodaySummary } from '@/features/today/TodayList';
 export function Popup() {
   const overview = useRequest('overview/get', {});
   const settings = useRequest('settings/get', {});
-  useTheme(settings.data?.theme);
+  useTheme(settings.data?.theme, settings.data?.accent);
 
   const open = (route?: string) => {
     void send('dashboard/open', route ? { route } : {}).then(() => window.close());

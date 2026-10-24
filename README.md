@@ -11,6 +11,7 @@ NeetCode All) without forgetting what you've learned.
 - **Streaks** with a GitHub-style heatmap, weekly rest days and extra rest days
 - **Stats**: progress per list and topic, weak topics, average solve time, finish forecast
 - Solving on either site counts. NeetCode and LeetCode URLs map to the same problem.
+- **Themes**: seven accent colors and light, dark or system mode, from the Themes tab
 - All data stays in your browser. Export/import JSON backups any time.
 
 ## Install (from source)

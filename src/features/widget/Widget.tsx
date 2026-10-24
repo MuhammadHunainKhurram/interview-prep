@@ -130,7 +130,7 @@ export function Widget({
   }, [openSignal]);
   useEffect(() => onOpenChange(open), [open, onOpenChange]);
 
-  useTheme(state?.theme, host);
+  useTheme(state?.theme, state?.accent, host);
 
   useEffect(() => {
     const el = toolbarRef.current;

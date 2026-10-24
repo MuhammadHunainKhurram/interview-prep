@@ -12,7 +12,7 @@ function currentRoute(): string {
 export function Dashboard() {
   const [route, setRoute] = useState(currentRoute);
   const settings = useRequest('settings/get', {});
-  useTheme(settings.data?.theme);
+  useTheme(settings.data?.theme, settings.data?.accent);
 
   useEffect(() => {
     const onHash = () => setRoute(currentRoute());

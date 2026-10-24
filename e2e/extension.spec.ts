@@ -141,6 +141,43 @@ test('settings reject out-of-range values', async ({ context, extensionId }) => 
   await expect(page.getByRole('button', { name: 'Sat', exact: true })).toBeDisabled();
 });
 
+test('themes tab changes the accent everywhere', async ({ context, extensionId }) => {
+  const dash = await context.newPage();
+  await dash.goto(`chrome-extension://${extensionId}/dashboard.html#/themes`);
+  await expect(dash.getByRole('heading', { name: 'Themes' })).toBeVisible();
+  await expect(dash.getByRole('radio', { name: 'Grape' })).toHaveAttribute('aria-checked', 'true');
+  if (SHOTS) await dash.screenshot({ path: `${SHOTS}/themes.png`, fullPage: true });
+
+  await dash.getByRole('radio', { name: 'Ocean' }).click();
+  await expect(dash.getByRole('radio', { name: 'Ocean' })).toHaveAttribute('aria-checked', 'true');
+  await expect
+    .poll(() => dash.evaluate(() => document.documentElement.style.getPropertyValue('--ip-accent')))
+    .toBe('#2ec4b6');
+
+  await dash.getByRole('radio', { name: /Light/ }).click();
+  await expect
+    .poll(() => dash.evaluate(() => document.documentElement.getAttribute('data-theme')))
+    .toBe('light');
+  await dash.waitForTimeout(400); // let color transitions finish
+  if (SHOTS) await dash.screenshot({ path: `${SHOTS}/themes-ocean-light.png`, fullPage: true });
+
+  // The on-page widget follows.
+  const page = await context.newPage();
+  await page.goto('https://neetcode.io/problems/duplicate-integer');
+  await expect(page.getByRole('toolbar', { name: 'How did it go?' })).toBeVisible();
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () =>
+          (
+            document.querySelector('interview-prep-widget') as HTMLElement | null
+          )?.style.getPropertyValue('--ip-accent') ?? '',
+      ),
+    )
+    .toBe('#2ec4b6');
+  if (SHOTS) await page.screenshot({ path: `${SHOTS}/widget-ocean-light.png` });
+});
+
 test('popup shows today', async ({ context, extensionId }) => {
   const page = await context.newPage();
   await page.setViewportSize({ width: 360, height: 600 });

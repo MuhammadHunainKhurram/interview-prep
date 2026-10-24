@@ -143,6 +143,14 @@ export const IconMoon = (p: IconProps) => (
     <path d="M20 14.5A8.5 8.5 0 019.5 4 8.5 8.5 0 1020 14.5z" />
   </Icon>
 );
+export const IconPalette = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M12 3a9 9 0 100 18c1.1 0 1.7-.9 1.4-1.9l-.3-.9a1.6 1.6 0 011.5-2.2H17a4 4 0 004-4c0-5-4-9-9-9z" />
+    <circle cx="7.5" cy="11.5" r="1.2" fill="currentColor" stroke="none" />
+    <circle cx="10" cy="7.5" r="1.2" fill="currentColor" stroke="none" />
+    <circle cx="15" cy="7.5" r="1.2" fill="currentColor" stroke="none" />
+  </Icon>
+);
 export const IconWarning = (p: IconProps) => (
   <Icon {...p}>
     <path d="M12 3l10 18H2z" />

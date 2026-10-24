@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { browser } from 'wxt/browser';
-import type { Theme } from '@/core/model/settings';
+import type { Accent, Theme } from '@/core/model/settings';
 import { errorMessage, send } from '@/shared/messaging/client';
 import type { RequestPayload, RequestType, ResponseMap } from '@/shared/messaging/contract';
+import { applyAccent } from './palettes';
 
 export interface RequestState<T> {
   data: T | undefined;
@@ -75,18 +76,29 @@ export function resolveTheme(theme: Theme): 'dark' | 'light' {
   return window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
 }
 
-/** Applies the theme from settings to the given element (default: <html>). */
-export function useTheme(theme: Theme | undefined, target?: HTMLElement | null) {
+/**
+ * Applies the light/dark mode and accent color from settings to the given element
+ * (default: <html>). Follows the system setting live when the mode is "system".
+ */
+export function useTheme(
+  theme: Theme | undefined,
+  accent: Accent | undefined,
+  target?: HTMLElement | null,
+) {
   useEffect(() => {
     if (!theme) return;
     const el = target ?? document.documentElement;
-    const apply = () => el.setAttribute('data-theme', resolveTheme(theme));
+    const apply = () => {
+      const mode = resolveTheme(theme);
+      el.setAttribute('data-theme', mode);
+      applyAccent(el, accent ?? 'grape', mode);
+    };
     apply();
     if (theme !== 'system') return;
     const mq = window.matchMedia('(prefers-color-scheme: light)');
     mq.addEventListener('change', apply);
     return () => mq.removeEventListener('change', apply);
-  }, [theme, target]);
+  }, [theme, accent, target]);
 }
 
 export function useNow(intervalMs: number, active: boolean): Date {

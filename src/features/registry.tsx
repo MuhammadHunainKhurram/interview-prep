@@ -5,11 +5,13 @@ import { ProblemsPage } from './problems/ProblemsPage';
 import { ReviewsPage } from './reviews/ReviewsPage';
 import { SettingsPage } from './settings/SettingsPage';
 import { StatsPage } from './stats/StatsPage';
+import { ThemesPage } from './themes/ThemesPage';
 import {
   IconChart,
   IconClock,
   IconHome,
   IconList,
+  IconPalette,
   IconRepeat,
   IconSettings,
 } from '@/shared/ui/icons';
@@ -63,6 +65,13 @@ export const PAGES: readonly DashboardPage[] = [
     description: 'How your practice is going',
     icon: IconChart,
     component: StatsPage,
+  },
+  {
+    route: 'themes',
+    label: 'Themes',
+    description: 'Pick a color and light or dark mode',
+    icon: IconPalette,
+    component: ThemesPage,
   },
   {
     route: 'settings',
