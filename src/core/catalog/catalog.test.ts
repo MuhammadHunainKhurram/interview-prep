@@ -41,10 +41,19 @@ describe('bundled catalog', () => {
 describe('parseProblemUrl', () => {
   it.each([
     ['https://leetcode.com/problems/two-sum/', { site: 'leetcode', slug: 'two-sum' }],
-    ['https://leetcode.com/problems/two-sum/description/?envType=x', { site: 'leetcode', slug: 'two-sum' }],
+    [
+      'https://leetcode.com/problems/two-sum/description/?envType=x',
+      { site: 'leetcode', slug: 'two-sum' },
+    ],
     ['https://www.leetcode.com/problems/Two-Sum', { site: 'leetcode', slug: 'two-sum' }],
-    ['https://neetcode.io/problems/duplicate-integer', { site: 'neetcode', slug: 'duplicate-integer' }],
-    ['https://neetcode.io/problems/duplicate-integer/question?list=neetcode150', { site: 'neetcode', slug: 'duplicate-integer' }],
+    [
+      'https://neetcode.io/problems/duplicate-integer',
+      { site: 'neetcode', slug: 'duplicate-integer' },
+    ],
+    [
+      'https://neetcode.io/problems/duplicate-integer/question?list=neetcode150',
+      { site: 'neetcode', slug: 'duplicate-integer' },
+    ],
   ])('parses %s', (href, expected) => {
     expect(parseProblemUrl(href)).toEqual(expected);
   });

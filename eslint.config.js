@@ -33,6 +33,9 @@ export default tseslint.config(
           message: 'dangerouslySetInnerHTML is banned.',
         },
       ],
+      // noUncheckedIndexedAccess makes `!` the explicit way to assert an index we've
+      // already proven exists; banning it would only push code toward unchecked casts.
+      '@typescript-eslint/no-non-null-assertion': 'off',
       'no-eval': 'error',
       'no-implied-eval': 'error',
     },
@@ -45,7 +48,9 @@ export default tseslint.config(
         'error',
         {
           patterns: [
-            { group: ['react', 'react-dom', 'wxt/*', '@/data/*', '@/features/*', '@/entrypoints/*'] },
+            {
+              group: ['react', 'react-dom', 'wxt/*', '@/data/*', '@/features/*', '@/entrypoints/*'],
+            },
           ],
         },
       ],
@@ -55,5 +60,6 @@ export default tseslint.config(
   {
     files: ['scripts/**', 'e2e/**', '*.config.{ts,js}'],
     languageOptions: { globals: globals.node },
+    rules: { '@typescript-eslint/no-non-null-assertion': 'off' },
   },
 );

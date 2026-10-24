@@ -47,8 +47,14 @@ export const SettingsSchema = z
         `Extra rest days can be at most ${LIMITS.adHocRestBudgetPerMonth.max} per month`,
       ),
     maxIntervalDays: int('Max review interval')
-      .min(LIMITS.maxIntervalDays.min, `Max review interval must be at least ${LIMITS.maxIntervalDays.min} days`)
-      .max(LIMITS.maxIntervalDays.max, `Max review interval can be at most ${LIMITS.maxIntervalDays.max} days`),
+      .min(
+        LIMITS.maxIntervalDays.min,
+        `Max review interval must be at least ${LIMITS.maxIntervalDays.min} days`,
+      )
+      .max(
+        LIMITS.maxIntervalDays.max,
+        `Max review interval can be at most ${LIMITS.maxIntervalDays.max} days`,
+      ),
     rolloverHour: int('Day rollover hour')
       .min(LIMITS.rolloverHour.min, 'Rollover hour must be between 12 AM and 6 AM')
       .max(LIMITS.rolloverHour.max, 'Rollover hour must be between 12 AM and 6 AM'),

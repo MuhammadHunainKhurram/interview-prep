@@ -13,12 +13,7 @@ import {
   type Timer,
 } from '@/core/model/records';
 import { SiteSchema, type Settings } from '@/core/model/settings';
-import type {
-  DifficultyTime,
-  Forecast,
-  ListProgress,
-  WeakSection,
-} from '@/core/stats/stats';
+import type { DifficultyTime, Forecast, ListProgress, WeakSection } from '@/core/stats/stats';
 import type { DayInfo, StreakSummary } from '@/core/streak/streak';
 import type { QuarantineEntry } from '@/data/repositories';
 
@@ -31,7 +26,11 @@ const Notes = z.string().max(LIMITS_RECORDS.notesMaxLength);
 
 export const RequestSchemas = {
   'widget/state': z
-    .object({ site: SiteSchema, slug: z.string().min(1).max(120), title: z.string().max(300).optional() })
+    .object({
+      site: SiteSchema,
+      slug: z.string().min(1).max(120),
+      title: z.string().max(300).optional(),
+    })
     .strict(),
   'timer/start': ProblemRef,
   'timer/pause': ProblemRef,
@@ -86,7 +85,15 @@ export const RequestSchemas = {
   'data/reset': z.object({ confirm: z.literal('DELETE') }).strict(),
   'integrity/get': Empty,
   'integrity/clear': Empty,
-  'dashboard/open': z.object({ route: z.string().regex(/^[a-z/-]*$/).max(40).optional() }).strict(),
+  'dashboard/open': z
+    .object({
+      route: z
+        .string()
+        .regex(/^[a-z/-]*$/)
+        .max(40)
+        .optional(),
+    })
+    .strict(),
 } as const;
 
 export type RequestType = keyof typeof RequestSchemas;
@@ -132,6 +139,7 @@ export interface WidgetState {
   doneToday: boolean;
   defaultPatterns: string[];
   preferredSite: Settings['preferredSite'];
+  theme: Settings['theme'];
 }
 
 export interface TodayView {
@@ -235,13 +243,7 @@ export interface ResponseMap {
 /* ---------- Envelope and errors ---------- */
 
 export type ErrorCode =
-  | 'validation'
-  | 'not-found'
-  | 'stale-timer'
-  | 'rest-day'
-  | 'conflict'
-  | 'backup'
-  | 'internal';
+  'validation' | 'not-found' | 'stale-timer' | 'rest-day' | 'conflict' | 'backup' | 'internal';
 
 export interface ErrorPayload {
   code: ErrorCode;
@@ -273,8 +275,7 @@ export interface RequestEnvelope<K extends RequestType = RequestType> {
 }
 
 export type ResponseEnvelope<K extends RequestType = RequestType> =
-  | { ok: true; data: ResponseMap[K] }
-  | { ok: false; error: ErrorPayload };
+  { ok: true; data: ResponseMap[K] } | { ok: false; error: ErrorPayload };
 
 /** Messages the background sends to a content script. */
 export type TabMessage = { channel: 'interview-prep'; type: 'widget/open' };

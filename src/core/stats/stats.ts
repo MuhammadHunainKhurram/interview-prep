@@ -32,7 +32,8 @@ export function listProgress(
   let attempted = 0;
   for (const p of catalog.list(listId)) {
     let s = sections.get(p.section);
-    if (!s) sections.set(p.section, (s = { section: p.section, total: 0, solved: 0, attempted: 0 }));
+    if (!s)
+      sections.set(p.section, (s = { section: p.section, total: 0, solved: 0, attempted: 0 }));
     s.total++;
     const pr = progress.get(p.id);
     if (pr?.everSolved) {
@@ -58,10 +59,7 @@ export interface WeakSection {
 
 const MIN_REVIEWS_FOR_WEAKNESS = 3;
 
-export function weakSections(
-  catalog: ProblemCatalog,
-  attempts: readonly Attempt[],
-): WeakSection[] {
+export function weakSections(catalog: ProblemCatalog, attempts: readonly Attempt[]): WeakSection[] {
   const stats = new Map<string, { reviews: number; struggles: number }>();
   for (const a of attempts) {
     if (!a.isReview) continue;

@@ -1,0 +1,113 @@
+/*
+ * Design tokens shared by every surface (popup, dashboard, on-page widget).
+ * Components only use these semantic names, never raw colors.
+ */
+@theme inline {
+  --color-bg: var(--ip-bg);
+  --color-surface: var(--ip-surface);
+  --color-surface-2: var(--ip-surface-2);
+  --color-border: var(--ip-border);
+  --color-text: var(--ip-text);
+  --color-muted: var(--ip-muted);
+  --color-faint: var(--ip-faint);
+  --color-on-color: var(--ip-on-color);
+
+  --color-green: var(--ip-green);
+  --color-green-shade: var(--ip-green-shade);
+  --color-green-soft: var(--ip-green-soft);
+  --color-blue: var(--ip-blue);
+  --color-blue-shade: var(--ip-blue-shade);
+  --color-blue-soft: var(--ip-blue-soft);
+  --color-yellow: var(--ip-yellow);
+  --color-yellow-shade: var(--ip-yellow-shade);
+  --color-yellow-soft: var(--ip-yellow-soft);
+  --color-red: var(--ip-red);
+  --color-red-shade: var(--ip-red-shade);
+  --color-red-soft: var(--ip-red-soft);
+  --color-orange: var(--ip-orange);
+
+  --color-heat-0: var(--ip-heat-0);
+  --color-heat-1: var(--ip-heat-1);
+  --color-heat-2: var(--ip-heat-2);
+  --color-heat-3: var(--ip-heat-3);
+  --color-heat-4: var(--ip-heat-4);
+
+  --font-sans:
+    'Nunito', ui-rounded, 'SF Pro Rounded', system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+
+:root,
+:host {
+  color-scheme: light;
+  --ip-bg: #f7f7f7;
+  --ip-surface: #ffffff;
+  --ip-surface-2: #f1f3f4;
+  --ip-border: #e5e5e5;
+  --ip-text: #3c3c3c;
+  --ip-muted: #6f6f6f;
+  --ip-faint: #a3a3a3;
+  /* Dark text on bright fills keeps WCAG AA contrast (white on green is only ~2:1). */
+  --ip-on-color: #102028;
+
+  --ip-green: #58cc02;
+  --ip-green-shade: #46a302;
+  --ip-green-soft: #e6f8d6;
+  --ip-blue: #1cb0f6;
+  --ip-blue-shade: #1899d6;
+  --ip-blue-soft: #dcf2fd;
+  --ip-yellow: #ffc800;
+  --ip-yellow-shade: #e0a800;
+  --ip-yellow-soft: #fff4cc;
+  --ip-red: #ff4b4b;
+  --ip-red-shade: #ea2b2b;
+  --ip-red-soft: #ffe0e0;
+  --ip-orange: #ff9600;
+
+  --ip-heat-0: #ebedf0;
+  --ip-heat-1: #c9f0a6;
+  --ip-heat-2: #8fdb4c;
+  --ip-heat-3: #58cc02;
+  --ip-heat-4: #3a8a00;
+}
+
+[data-theme='dark'],
+:host([data-theme='dark']) {
+  color-scheme: dark;
+  --ip-bg: #131f24;
+  --ip-surface: #1a2b32;
+  --ip-surface-2: #22363f;
+  --ip-border: #37464f;
+  --ip-text: #f1f7fb;
+  --ip-muted: #a6b4bc;
+  --ip-faint: #6d7f88;
+  --ip-on-color: #0f1b20;
+
+  --ip-green: #58cc02;
+  --ip-green-shade: #3f9a00;
+  --ip-green-soft: #1f3b17;
+  --ip-blue: #1cb0f6;
+  --ip-blue-shade: #1287bf;
+  --ip-blue-soft: #133548;
+  --ip-yellow: #ffc800;
+  --ip-yellow-shade: #c99d00;
+  --ip-yellow-soft: #3b3417;
+  --ip-red: #ff4b4b;
+  --ip-red-shade: #c93636;
+  --ip-red-soft: #3f1f22;
+  --ip-orange: #ff9600;
+
+  --ip-heat-0: #22363f;
+  --ip-heat-1: #1d4d2a;
+  --ip-heat-2: #2c7a1a;
+  --ip-heat-3: #46a302;
+  --ip-heat-4: #7ee031;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

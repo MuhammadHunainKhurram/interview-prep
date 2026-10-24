@@ -1,0 +1,82 @@
+/*
+ * Styles for the on-page widget, injected into its shadow root.
+ * The host page can't affect these, and these can't leak into the host page.
+ */
+@import 'tailwindcss';
+@import './tokens.css';
+
+@source '../..';
+
+/*
+ * The host page controls the root font size, so rem units are unreliable here.
+ * Override Tailwind's rem-based scales with px values.
+ */
+:host {
+  --spacing: 4px;
+  --text-xs: 12px;
+  --text-xs--line-height: 16px;
+  --text-sm: 14px;
+  --text-sm--line-height: 20px;
+  --text-base: 16px;
+  --text-base--line-height: 24px;
+  --text-lg: 18px;
+  --text-lg--line-height: 28px;
+  --text-xl: 20px;
+  --text-xl--line-height: 28px;
+  --text-2xl: 24px;
+  --text-2xl--line-height: 32px;
+  --text-3xl: 30px;
+  --text-3xl--line-height: 36px;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
+  --radius-2xl: 16px;
+  --container-xs: 320px;
+  --container-sm: 384px;
+}
+
+/*
+ * Chrome ignores @property rules inside shadow roots, so the initial values
+ * Tailwind registers that way are missing. Provide them here.
+ */
+@layer base {
+  *,
+  ::before,
+  ::after {
+    --tw-border-style: solid;
+    --tw-outline-style: solid;
+    --tw-shadow: 0 0 #0000;
+    --tw-shadow-color: initial;
+    --tw-inset-shadow: 0 0 #0000;
+    --tw-ring-shadow: 0 0 #0000;
+    --tw-inset-ring-shadow: 0 0 #0000;
+    --tw-ring-offset-shadow: 0 0 #0000;
+    --tw-ring-offset-width: 0px;
+    --tw-ring-offset-color: #fff;
+    --tw-translate-x: 0;
+    --tw-translate-y: 0;
+    --tw-translate-z: 0;
+    --tw-rotate-x: initial;
+    --tw-rotate-y: initial;
+    --tw-rotate-z: initial;
+    --tw-scale-x: 1;
+    --tw-scale-y: 1;
+    --tw-scale-z: 1;
+    --tw-space-y-reverse: 0;
+    --tw-space-x-reverse: 0;
+  }
+}
+
+.ip-root {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--color-text);
+  -webkit-font-smoothing: antialiased;
+}
+
+.ip-root :focus-visible {
+  outline: 3px solid var(--color-blue);
+  outline-offset: 2px;
+}

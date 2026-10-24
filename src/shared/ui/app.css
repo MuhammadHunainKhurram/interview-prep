@@ -1,0 +1,30 @@
+/* Styles for extension pages (popup and dashboard). */
+@import 'tailwindcss';
+@import '@fontsource/nunito/400.css';
+@import '@fontsource/nunito/600.css';
+@import '@fontsource/nunito/700.css';
+@import '@fontsource/nunito/800.css';
+@import './tokens.css';
+
+@source '../..';
+
+html,
+body {
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+}
+
+/* Hatched fill for rest days, so they read as different without relying on color. */
+.ip-hatch {
+  background-image: repeating-linear-gradient(
+    135deg,
+    var(--color-faint) 0 1px,
+    transparent 1px 4px
+  );
+}
+
+:focus-visible {
+  outline: 3px solid var(--color-blue);
+  outline-offset: 2px;
+}

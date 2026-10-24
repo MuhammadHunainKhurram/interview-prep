@@ -1,10 +1,4 @@
-import type {
-  Attempt,
-  DaySnapshot,
-  RestDay,
-  Timer,
-  UnlistedProblem,
-} from '@/core/model/records';
+import type { Attempt, DaySnapshot, RestDay, Timer, UnlistedProblem } from '@/core/model/records';
 import type { Settings } from '@/core/model/settings';
 
 /** A collection of records addressed by a string key. */

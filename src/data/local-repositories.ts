@@ -82,7 +82,10 @@ export class LocalRepositories implements Repositories {
       if (m.schemaVersion === CURRENT_SCHEMA_VERSION) return;
       const raw = await this.driver.get(DATA_KEYS);
       const migrated = migrate(raw, m.schemaVersion);
-      await this.driver.set({ ...migrated, [KEYS.meta]: { ...m, schemaVersion: CURRENT_SCHEMA_VERSION } });
+      await this.driver.set({
+        ...migrated,
+        [KEYS.meta]: { ...m, schemaVersion: CURRENT_SCHEMA_VERSION },
+      });
     })();
     // Let a later call retry if initialization failed.
     this.ready.catch(() => (this.ready = undefined));
@@ -117,7 +120,9 @@ export class LocalRepositories implements Repositories {
         else
           bad.push({
             collection: key,
-            reason: parsed.success ? 'Key mismatch' : parsed.error.issues[0]?.message ?? 'Invalid',
+            reason: parsed.success
+              ? 'Key mismatch'
+              : (parsed.error.issues[0]?.message ?? 'Invalid'),
             raw,
             quarantinedAt: this.now().toISOString(),
           });
@@ -199,17 +204,35 @@ export class LocalRepositories implements Repositories {
     const byKey = <T>(xs: T[], k: (x: T) => string) => Object.fromEntries(xs.map((x) => [k(x), x]));
     await this.driver.set({
       [KEYS.settings]: SettingsSchema.parse(data.settings),
-      [KEYS.attempts]: byKey(data.attempts.map((a) => AttemptSchema.parse(a)), (a) => a.id),
-      [KEYS.restDays]: byKey(data.restDays.map((r) => RestDaySchema.parse(r)), (r) => r.logicalDay),
-      [KEYS.snapshots]: byKey(data.snapshots.map((s) => DaySnapshotSchema.parse(s)), (s) => s.logicalDay),
-      [KEYS.unlisted]: byKey(data.unlisted.map((u) => UnlistedProblemSchema.parse(u)), (u) => u.id),
+      [KEYS.attempts]: byKey(
+        data.attempts.map((a) => AttemptSchema.parse(a)),
+        (a) => a.id,
+      ),
+      [KEYS.restDays]: byKey(
+        data.restDays.map((r) => RestDaySchema.parse(r)),
+        (r) => r.logicalDay,
+      ),
+      [KEYS.snapshots]: byKey(
+        data.snapshots.map((s) => DaySnapshotSchema.parse(s)),
+        (s) => s.logicalDay,
+      ),
+      [KEYS.unlisted]: byKey(
+        data.unlisted.map((u) => UnlistedProblemSchema.parse(u)),
+        (u) => u.id,
+      ),
       [KEYS.timers]: {},
     });
   }
 
   async saveSafetyCopy(label: string): Promise<void> {
-    const copy: SafetyCopy = { label, savedAt: this.now().toISOString(), data: await this.exportData() };
-    await this.driver.set({ [KEYS.safetyCopy]: { ...copy, schemaVersion: CURRENT_SCHEMA_VERSION } });
+    const copy: SafetyCopy = {
+      label,
+      savedAt: this.now().toISOString(),
+      data: await this.exportData(),
+    };
+    await this.driver.set({
+      [KEYS.safetyCopy]: { ...copy, schemaVersion: CURRENT_SCHEMA_VERSION },
+    });
   }
 
   async getSafetyCopy(): Promise<SafetyCopy | null> {

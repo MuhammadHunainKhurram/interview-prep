@@ -31,8 +31,20 @@ let driver: MemoryDriver;
 let repos: LocalRepositories;
 let service: TrackerService;
 
-function record(problemId: string, outcome: ParsedRequest<'attempt/record'>['outcome'] = 'solved', extra: Partial<ParsedRequest<'attempt/record'>> = {}) {
-  return service.recordAttempt({ id: uuid(), problemId, site: 'neetcode', outcome, patterns: [], notes: '', ...extra });
+function record(
+  problemId: string,
+  outcome: ParsedRequest<'attempt/record'>['outcome'] = 'solved',
+  extra: Partial<ParsedRequest<'attempt/record'>> = {},
+) {
+  return service.recordAttempt({
+    id: uuid(),
+    problemId,
+    site: 'neetcode',
+    outcome,
+    patterns: [],
+    notes: '',
+    ...extra,
+  });
 }
 
 beforeEach(() => {
@@ -45,14 +57,26 @@ beforeEach(() => {
 describe('widget state', () => {
   it('resolves a NeetCode slug to the catalog problem', async () => {
     const s = await service.widgetState({ site: 'neetcode', slug: 'duplicate-integer' });
-    expect(s.problem).toMatchObject({ id: CONTAINS_DUPLICATE, title: 'Contains Duplicate', unlisted: false });
+    expect(s.problem).toMatchObject({
+      id: CONTAINS_DUPLICATE,
+      title: 'Contains Duplicate',
+      unlisted: false,
+    });
     expect(s.planRole).toBe('new');
     expect(s.defaultPatterns).toEqual(['Arrays & Hashing']);
   });
 
   it('treats unknown problems as unlisted', async () => {
-    const s = await service.widgetState({ site: 'leetcode', slug: 'some-new-problem', title: 'Some New Problem - LeetCode' });
-    expect(s.problem).toMatchObject({ id: 'some-new-problem', title: 'Some New Problem', unlisted: true });
+    const s = await service.widgetState({
+      site: 'leetcode',
+      slug: 'some-new-problem',
+      title: 'Some New Problem - LeetCode',
+    });
+    expect(s.problem).toMatchObject({
+      id: 'some-new-problem',
+      title: 'Some New Problem',
+      unlisted: true,
+    });
   });
 });
 
@@ -83,7 +107,14 @@ describe('recording attempts', () => {
 
   it('is idempotent for the same request id (double clicks)', async () => {
     const id = uuid();
-    const req = { id, problemId: CONTAINS_DUPLICATE, site: 'neetcode' as const, outcome: 'solved' as const, patterns: [], notes: '' };
+    const req = {
+      id,
+      problemId: CONTAINS_DUPLICATE,
+      site: 'neetcode' as const,
+      outcome: 'solved' as const,
+      patterns: [],
+      notes: '',
+    };
     await Promise.all([service.recordAttempt(req), service.recordAttempt(req)]);
     expect(await repos.attempts.all()).toHaveLength(1);
   });
@@ -91,7 +122,10 @@ describe('recording attempts', () => {
   it('asks before saving a timer that ran for hours', async () => {
     await service.timerStart({ problemId: CONTAINS_DUPLICATE });
     clock.advance(7 * 3600_000);
-    await expect(record(CONTAINS_DUPLICATE)).rejects.toMatchObject({ code: 'stale-timer', extra: { elapsedSec: 7 * 3600 } });
+    await expect(record(CONTAINS_DUPLICATE)).rejects.toMatchObject({
+      code: 'stale-timer',
+      extra: { elapsedSec: 7 * 3600 },
+    });
     const kept = await record(CONTAINS_DUPLICATE, 'solved', { timeChoice: 'discard' });
     expect(kept.attempt.durationSec).toBeNull();
   });
@@ -138,7 +172,9 @@ describe('undo', () => {
   it('refuses to undo old attempts', async () => {
     const { attempt } = await record(CONTAINS_DUPLICATE);
     clock.advance(10 * 60_000);
-    await expect(service.undoAttempt({ id: attempt.id })).rejects.toMatchObject({ code: 'conflict' });
+    await expect(service.undoAttempt({ id: attempt.id })).rejects.toMatchObject({
+      code: 'conflict',
+    });
   });
 });
 
@@ -200,14 +236,18 @@ describe('rest days', () => {
 
   it('rejects a rest day on a day with practice', async () => {
     await record(CONTAINS_DUPLICATE);
-    await expect(service.addRestDay({ day: '2026-01-05' })).rejects.toMatchObject({ code: 'rest-day' });
+    await expect(service.addRestDay({ day: '2026-01-05' })).rejects.toMatchObject({
+      code: 'rest-day',
+    });
   });
 });
 
 describe('settings', () => {
   it('returns field errors for invalid values', async () => {
     const err = await service
-      .saveSettings({ settings: { ...DEFAULT_SETTINGS, adHocRestBudgetPerMonth: 60, dailyGoal: 0 } })
+      .saveSettings({
+        settings: { ...DEFAULT_SETTINGS, adHocRestBudgetPerMonth: 60, dailyGoal: 0 },
+      })
       .catch((e: AppError) => e);
     expect(err).toBeInstanceOf(AppError);
     expect((err as AppError).extra.fields).toMatchObject({
@@ -236,11 +276,19 @@ describe('backup', () => {
     ['not json', "That file isn't valid JSON."],
     ['{"hello":1}', "That file isn't an Interview Prep backup."],
   ])('rejects %s', async (text, message) => {
-    await expect(service.previewBackup({ text })).rejects.toMatchObject({ code: 'backup', message });
+    await expect(service.previewBackup({ text })).rejects.toMatchObject({
+      code: 'backup',
+      message,
+    });
   });
 
   it('rejects backups from a newer version', async () => {
-    const text = JSON.stringify({ format: 'interview-prep-backup', schemaVersion: 99, exportedAt: new Date().toISOString(), data: {} });
+    const text = JSON.stringify({
+      format: 'interview-prep-backup',
+      schemaVersion: 99,
+      exportedAt: new Date().toISOString(),
+      data: {},
+    });
     await expect(service.previewBackup({ text })).rejects.toMatchObject({ code: 'backup' });
   });
 
@@ -248,7 +296,9 @@ describe('backup', () => {
     const { text } = await service.exportBackup();
     const tampered = JSON.parse(text);
     tampered.data.settings.adHocRestBudgetPerMonth = 60;
-    await expect(service.importBackup({ text: JSON.stringify(tampered) })).rejects.toMatchObject({ code: 'backup' });
+    await expect(service.importBackup({ text: JSON.stringify(tampered) })).rejects.toMatchObject({
+      code: 'backup',
+    });
   });
 });
 
@@ -256,7 +306,10 @@ describe('data integrity', () => {
   it('quarantines invalid records instead of deleting them', async () => {
     await record(CONTAINS_DUPLICATE);
     const { attempts } = await driver.get([KEYS.attempts]);
-    await driver.setRaw(KEYS.attempts, { ...(attempts as object), broken: { id: 'broken', outcome: 'maybe' } });
+    await driver.setRaw(KEYS.attempts, {
+      ...(attempts as object),
+      broken: { id: 'broken', outcome: 'maybe' },
+    });
     expect(await repos.attempts.all()).toHaveLength(1);
     const { entries } = await service.integrity();
     expect(entries).toHaveLength(1);
@@ -280,19 +333,50 @@ describe('router', () => {
   });
 
   it('rejects messages from other extensions', async () => {
-    const res = await dispatch(createHandlers(deps()), { channel: 'interview-prep', type: 'today/get', payload: {} }, { id: 'evil' }, 'me');
+    const res = await dispatch(
+      createHandlers(deps()),
+      { channel: 'interview-prep', type: 'today/get', payload: {} },
+      { id: 'evil' },
+      'me',
+    );
     expect(res).toMatchObject({ ok: false, error: { code: 'validation' } });
   });
 
   it('rejects unknown and malformed requests', async () => {
     const h = createHandlers(deps());
-    expect(await dispatch(h, { channel: 'interview-prep', type: 'toString', payload: {} }, { id: 'me' }, 'me')).toMatchObject({ ok: false });
-    expect(await dispatch(h, { channel: 'interview-prep', type: 'attempt/record', payload: { id: 'x' } }, { id: 'me' }, 'me')).toMatchObject({ ok: false, error: { code: 'validation' } });
-    expect(await dispatch(h, { channel: 'interview-prep', type: 'today/get', payload: { extra: 1 } }, { id: 'me' }, 'me')).toMatchObject({ ok: false });
+    expect(
+      await dispatch(
+        h,
+        { channel: 'interview-prep', type: 'toString', payload: {} },
+        { id: 'me' },
+        'me',
+      ),
+    ).toMatchObject({ ok: false });
+    expect(
+      await dispatch(
+        h,
+        { channel: 'interview-prep', type: 'attempt/record', payload: { id: 'x' } },
+        { id: 'me' },
+        'me',
+      ),
+    ).toMatchObject({ ok: false, error: { code: 'validation' } });
+    expect(
+      await dispatch(
+        h,
+        { channel: 'interview-prep', type: 'today/get', payload: { extra: 1 } },
+        { id: 'me' },
+        'me',
+      ),
+    ).toMatchObject({ ok: false });
   });
 
   it('dispatches valid requests', async () => {
-    const res = await dispatch(createHandlers(deps()), { channel: 'interview-prep', type: 'today/get', payload: {} }, { id: 'me' }, 'me');
+    const res = await dispatch(
+      createHandlers(deps()),
+      { channel: 'interview-prep', type: 'today/get', payload: {} },
+      { id: 'me' },
+      'me',
+    );
     expect(res.ok).toBe(true);
   });
 

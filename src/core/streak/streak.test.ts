@@ -6,11 +6,7 @@ import { computeStreak, dayInfo, heatmap, type StreakInput } from './streak';
 
 const goal1 = { dailyGoal: 1, minReviewsPerDay: 0 };
 
-function input(
-  today: string,
-  activeDays: string[],
-  patch: Partial<StreakInput> = {},
-): StreakInput {
+function input(today: string, activeDays: string[], patch: Partial<StreakInput> = {}): StreakInput {
   const attempts = activeDays.map((d, i) => attempt(`p${i}`, d));
   return {
     today,
@@ -25,7 +21,11 @@ function input(
 
 describe('computeStreak', () => {
   it('is zero with no history', () => {
-    expect(computeStreak(input('2026-01-10', []))).toEqual({ current: 0, longest: 0, todayMet: false });
+    expect(computeStreak(input('2026-01-10', []))).toEqual({
+      current: 0,
+      longest: 0,
+      todayMet: false,
+    });
   });
 
   it('counts consecutive goal days', () => {

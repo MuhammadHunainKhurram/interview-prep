@@ -14,7 +14,10 @@ import * as acorn from 'acorn';
 import { CatalogSchema, type Catalog, type CatalogProblem } from '../src/core/catalog/schema';
 
 const ORIGIN = 'https://neetcode.io';
-const OUT = resolve(dirname(fileURLToPath(import.meta.url)), '../src/core/catalog/data/catalog.json');
+const OUT = resolve(
+  dirname(fileURLToPath(import.meta.url)),
+  '../src/core/catalog/data/catalog.json',
+);
 
 type Node = acorn.Node & Record<string, unknown>;
 type Literal = string | number | boolean | null | Literal[] | { [k: string]: Literal };
@@ -120,7 +123,11 @@ async function main() {
     }
     if (!Array.isArray(value)) return;
     if (value.every(isRawProblem)) problemArrays.push(value as RawProblem[]);
-    else if (!sections && value[0] === 'Arrays & Hashing' && value.every((v) => typeof v === 'string'))
+    else if (
+      !sections &&
+      value[0] === 'Arrays & Hashing' &&
+      value.every((v) => typeof v === 'string')
+    )
       sections = value as string[];
   });
 

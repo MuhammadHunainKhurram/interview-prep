@@ -19,7 +19,12 @@ export interface RouterDeps {
   onDataChanged: () => Promise<void>;
 }
 
-export function createHandlers({ service: s, openDashboard, onSettingsChanged, onDataChanged }: RouterDeps): Handlers {
+export function createHandlers({
+  service: s,
+  openDashboard,
+  onSettingsChanged,
+  onDataChanged,
+}: RouterDeps): Handlers {
   const after =
     <A, R>(fn: (a: A) => Promise<R>, hook: () => Promise<void>) =>
     async (a: A) => {
@@ -86,13 +91,19 @@ export async function dispatch(
     const parsed = RequestSchemas[type].safeParse(m.payload ?? {});
     if (!parsed.success) {
       const issue = parsed.error.issues[0];
-      throw new AppError('validation', issue ? `${issue.path.join('.') || 'request'}: ${issue.message}` : 'Invalid request.');
+      throw new AppError(
+        'validation',
+        issue ? `${issue.path.join('.') || 'request'}: ${issue.message}` : 'Invalid request.',
+      );
     }
     const handler = handlers[type] as (p: unknown) => Promise<unknown>;
     return { ok: true, data: (await handler(parsed.data)) as never };
   } catch (e) {
     if (e instanceof AppError) return { ok: false, error: e.toPayload() };
     console.error('[interview-prep] request failed', e);
-    return { ok: false, error: { code: 'internal', message: 'Something went wrong. Please try again.' } };
+    return {
+      ok: false,
+      error: { code: 'internal', message: 'Something went wrong. Please try again.' },
+    };
   }
 }

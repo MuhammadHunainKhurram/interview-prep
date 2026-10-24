@@ -12,7 +12,11 @@ describe('loadConfig', () => {
 
   it('only allows https Supabase URLs', () => {
     expect(() =>
-      loadConfig({ WXT_STORAGE_BACKEND: 'supabase', WXT_SUPABASE_URL: 'http://x.supabase.co', WXT_SUPABASE_ANON_KEY: 'k' }),
+      loadConfig({
+        WXT_STORAGE_BACKEND: 'supabase',
+        WXT_SUPABASE_URL: 'http://x.supabase.co',
+        WXT_SUPABASE_ANON_KEY: 'k',
+      }),
     ).toThrow();
   });
 

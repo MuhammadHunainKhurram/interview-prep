@@ -29,7 +29,12 @@ import {
   type UnlistedProblem,
 } from '@/core/model/records';
 import { SettingsSchema, type Settings, type Site } from '@/core/model/settings';
-import { buildDayPlan, evaluateDay, plannedReviewCount, type DayPlan } from '@/core/planner/planner';
+import {
+  buildDayPlan,
+  evaluateDay,
+  plannedReviewCount,
+  type DayPlan,
+} from '@/core/planner/planner';
 import { attemptsByDay, buildProgress, type ProblemProgress } from '@/core/progress/progress';
 import type { Scheduler } from '@/core/srs/scheduler';
 import {
@@ -74,12 +79,13 @@ interface Context {
 /** Strips site suffixes and control characters from a page title. */
 export function cleanTitle(raw: string | undefined, fallbackSlug: string): string {
   const cleaned = (raw ?? '')
+    // eslint-disable-next-line no-control-regex -- stripping control characters is the point
     .replace(/[\u0000-\u001f\u007f]/g, ' ')
     .replace(/\s*[-|–]\s*(LeetCode|NeetCode).*$/i, '')
     .replace(/\s+/g, ' ')
     .trim()
     .slice(0, 200);
-  if (cleaned) return cleaned;
+  if (cleaned && !/^(leet|neet)code$/i.test(cleaned)) return cleaned;
   return fallbackSlug
     .split('-')
     .map((w) => (w ? w[0]!.toUpperCase() + w.slice(1) : w))
@@ -124,7 +130,9 @@ export class TrackerService {
       restDays,
       snapshots: snapshotMap,
       unlisted: new Map(unlisted.map((u) => [u.id, u])),
-      progress: buildProgress(attempts, this.scheduler, { maxIntervalDays: settings.maxIntervalDays }),
+      progress: buildProgress(attempts, this.scheduler, {
+        maxIntervalDays: settings.maxIntervalDays,
+      }),
       rest: {
         restWeekdays: settings.restWeekdays,
         adHoc: new Set(restDays.map((r) => r.logicalDay)),
@@ -323,6 +331,7 @@ export class TrackerService {
               ? [section]
               : [],
         preferredSite: ctx.settings.preferredSite,
+        theme: ctx.settings.theme,
       };
     });
   }
@@ -354,7 +363,10 @@ export class TrackerService {
         ...existing,
         status: 'paused',
         startedAt: null,
-        accumulatedMs: Math.min(timerElapsedMs(existing, now), LIMITS_RECORDS.maxDurationSec * 1000),
+        accumulatedMs: Math.min(
+          timerElapsedMs(existing, now),
+          LIMITS_RECORDS.maxDurationSec * 1000,
+        ),
         updatedAt: now.toISOString(),
       };
       await this.repos.timers.put(timer);
@@ -395,7 +407,9 @@ export class TrackerService {
       }
 
       const timer = await this.repos.timers.get(req.problemId);
-      let durationSec: number | null = timer ? Math.round(timerElapsedMs(timer, ctx.now) / 1000) : null;
+      let durationSec: number | null = timer
+        ? Math.round(timerElapsedMs(timer, ctx.now) / 1000)
+        : null;
       if (durationSec !== null && durationSec > LIMITS_RECORDS.staleTimerSec && !req.timeChoice)
         throw new AppError('stale-timer', 'The timer has been running for a long time.', {
           elapsedSec: durationSec,
@@ -410,6 +424,7 @@ export class TrackerService {
         site: req.site,
         outcome: req.outcome,
         patterns: [...new Set(req.patterns.map((p) => p.trim()).filter(Boolean))],
+        // eslint-disable-next-line no-control-regex -- strip control chars except tab/newline
         notes: req.notes.replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/g, '').trimEnd(),
         durationSec,
         logicalDay: ctx.today,
@@ -524,7 +539,9 @@ export class TrackerService {
       const ctx = await this.load();
       return [...ctx.unlisted.keys()]
         .map((id) => this.withStatus(ctx, id))
-        .sort((a, b) => (b.status?.lastAttemptAt ?? '').localeCompare(a.status?.lastAttemptAt ?? ''));
+        .sort((a, b) =>
+          (b.status?.lastAttemptAt ?? '').localeCompare(a.status?.lastAttemptAt ?? ''),
+        );
     });
   }
 
@@ -534,7 +551,10 @@ export class TrackerService {
       const due = [...ctx.progress.values()]
         .filter((p) => p.card.dueDay <= ctx.today)
         .sort((a, b) => a.card.dueDay.localeCompare(b.card.dueDay))
-        .map((p) => ({ ...this.withStatus(ctx, p.problemId), overdueDays: diffDays(p.card.dueDay, ctx.today) }));
+        .map((p) => ({
+          ...this.withStatus(ctx, p.problemId),
+          overdueDays: diffDays(p.card.dueDay, ctx.today),
+        }));
       const byDay = new Map<LogicalDay, ProblemWithStatus[]>();
       for (const p of ctx.progress.values()) {
         if (p.card.dueDay <= ctx.today) continue;
@@ -545,7 +565,9 @@ export class TrackerService {
       return {
         today: ctx.today,
         due,
-        upcoming: [...byDay].sort(([a], [b]) => a.localeCompare(b)).map(([day, problems]) => ({ day, problems })),
+        upcoming: [...byDay]
+          .sort(([a], [b]) => a.localeCompare(b))
+          .map(([day, problems]) => ({ day, problems })),
         preferredSite: ctx.settings.preferredSite,
       };
     });
@@ -559,7 +581,9 @@ export class TrackerService {
         .sort((a, b) => b.completedAt.localeCompare(a.completedAt));
       return {
         total: filtered.length,
-        attempts: filtered.slice(req.offset, req.offset + req.limit).map((a) => this.attemptView(ctx, a)),
+        attempts: filtered
+          .slice(req.offset, req.offset + req.limit)
+          .map((a) => this.attemptView(ctx, a)),
       };
     });
   }
@@ -602,7 +626,8 @@ export class TrackerService {
       const parsed = SettingsSchema.safeParse(settings);
       if (!parsed.success) {
         const fields: Record<string, string> = {};
-        for (const issue of parsed.error.issues) fields[String(issue.path[0] ?? 'form')] ??= issue.message;
+        for (const issue of parsed.error.issues)
+          fields[String(issue.path[0] ?? 'form')] ??= issue.message;
         throw new AppError('validation', 'Some settings are invalid.', { fields });
       }
       // Freeze past days under the old settings before applying the new ones.
@@ -615,7 +640,8 @@ export class TrackerService {
 
   private restDaysView(ctx: Context): RestDaysView {
     const usedByMonth: Record<string, number> = {};
-    for (const r of ctx.restDays) usedByMonth[monthKey(r.logicalDay)] = (usedByMonth[monthKey(r.logicalDay)] ?? 0) + 1;
+    for (const r of ctx.restDays)
+      usedByMonth[monthKey(r.logicalDay)] = (usedByMonth[monthKey(r.logicalDay)] ?? 0) + 1;
     return {
       today: ctx.today,
       restWeekdays: ctx.settings.restWeekdays,
@@ -642,9 +668,15 @@ export class TrackerService {
         daysWithAttempts: new Set(ctx.attempts.map((a) => a.logicalDay)),
         snapshots: ctx.snapshots,
       });
-      if (error) throw new AppError('rest-day', REST_DAY_ERROR_MESSAGES[error], { restDayError: error });
+      if (error)
+        throw new AppError('rest-day', REST_DAY_ERROR_MESSAGES[error], { restDayError: error });
       const stamp = ctx.now.toISOString();
-      await this.repos.restDays.put({ logicalDay: day, kind: 'adhoc', createdAt: stamp, updatedAt: stamp });
+      await this.repos.restDays.put({
+        logicalDay: day,
+        kind: 'adhoc',
+        createdAt: stamp,
+        updatedAt: stamp,
+      });
       const past = day < ctx.today ? ctx.snapshots.get(day) : undefined;
       if (past) await this.repos.snapshots.put({ ...past, isRest: true, updatedAt: stamp });
       const next = await this.load();
@@ -662,7 +694,12 @@ export class TrackerService {
         throw new AppError('not-found', "That day isn't an extra rest day.");
       await this.repos.restDays.remove(day);
       const past = day < ctx.today ? ctx.snapshots.get(day) : undefined;
-      if (past) await this.repos.snapshots.put({ ...past, isRest: false, updatedAt: ctx.now.toISOString() });
+      if (past)
+        await this.repos.snapshots.put({
+          ...past,
+          isRest: false,
+          updatedAt: ctx.now.toISOString(),
+        });
       const next = await this.load();
       await this.syncSnapshots(next);
       return this.restDaysView(next);
@@ -678,7 +715,10 @@ export class TrackerService {
 
   exportBackup() {
     return this.exclusive(async () =>
-      this.backupFile(createBackup(await this.repos.exportData(), this.clock.now()), 'interview-prep-backup'),
+      this.backupFile(
+        createBackup(await this.repos.exportData(), this.clock.now()),
+        'interview-prep-backup',
+      ),
     );
   }
 
@@ -717,7 +757,10 @@ export class TrackerService {
     return this.exclusive(async () => {
       const copy = await this.repos.getSafetyCopy();
       if (!copy) return null;
-      return this.backupFile(createBackup(copy.data, new Date(copy.savedAt)), 'interview-prep-safety-copy');
+      return this.backupFile(
+        createBackup(copy.data, new Date(copy.savedAt)),
+        'interview-prep-safety-copy',
+      );
     });
   }
 

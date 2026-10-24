@@ -63,10 +63,7 @@ describe('buildDayPlan', () => {
   });
 
   it('puts the most overdue reviews first', () => {
-    const attempts = [
-      attempt('p2', '2026-01-05', 'failed'),
-      attempt('p1', '2026-01-01', 'failed'),
-    ];
+    const attempts = [attempt('p2', '2026-01-05', 'failed'), attempt('p1', '2026-01-01', 'failed')];
     expect(ids(plan('2026-01-10', attempts)).slice(0, 2)).toEqual(['review:p1', 'review:p2']);
   });
 

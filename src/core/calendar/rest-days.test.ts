@@ -4,7 +4,12 @@ import { restContext } from '../testing/factories';
 import { canRemoveAdHocRestDay, nextActiveDay, validateAdHocRestDay } from './rest-days';
 
 const ts = '2026-01-01T00:00:00.000Z';
-const rest = (logicalDay: string): RestDay => ({ logicalDay, kind: 'adhoc', createdAt: ts, updatedAt: ts });
+const rest = (logicalDay: string): RestDay => ({
+  logicalDay,
+  kind: 'adhoc',
+  createdAt: ts,
+  updatedAt: ts,
+});
 
 const base = {
   today: '2026-02-10',

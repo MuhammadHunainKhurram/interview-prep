@@ -9,6 +9,8 @@ export function createRepositories(config: AppConfig): Repositories {
       return new LocalRepositories(chromeStorageDriver);
     case 'supabase':
       // Implement `Repositories` over Supabase (with row-level security) and return it here.
-      throw new Error('The Supabase backend is not implemented yet. Set WXT_STORAGE_BACKEND=local.');
+      throw new Error(
+        'The Supabase backend is not implemented yet. Set WXT_STORAGE_BACKEND=local.',
+      );
   }
 }

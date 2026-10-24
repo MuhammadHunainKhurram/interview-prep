@@ -22,7 +22,10 @@ const BackupEnvelopeSchema = z.object({
 
 const DataSetSchema = z
   .object({
-    settings: z.unknown().transform((s) => ({ ...DEFAULT_SETTINGS, ...(s as object) })).pipe(SettingsSchema),
+    settings: z
+      .unknown()
+      .transform((s) => ({ ...DEFAULT_SETTINGS, ...(s as object) }))
+      .pipe(SettingsSchema),
     attempts: z.array(AttemptSchema).max(MAX_RECORDS),
     restDays: z.array(RestDaySchema).max(MAX_RECORDS),
     snapshots: z.array(DaySnapshotSchema).max(MAX_RECORDS),
@@ -44,7 +47,12 @@ export interface Backup {
 }
 
 export function createBackup(data: DataSet, now: Date): Backup {
-  return { format: BACKUP_FORMAT, schemaVersion: CURRENT_SCHEMA_VERSION, exportedAt: now.toISOString(), data };
+  return {
+    format: BACKUP_FORMAT,
+    schemaVersion: CURRENT_SCHEMA_VERSION,
+    exportedAt: now.toISOString(),
+    data,
+  };
 }
 
 export class BackupError extends Error {}
@@ -75,5 +83,10 @@ export function parseBackup(text: string): Backup {
       `Backup failed validation${issue ? ` at ${issue.path.join('.') || 'root'}: ${issue.message}` : ''}.`,
     );
   }
-  return { ...envelope.data, format: BACKUP_FORMAT, schemaVersion: CURRENT_SCHEMA_VERSION, data: data.data };
+  return {
+    ...envelope.data,
+    format: BACKUP_FORMAT,
+    schemaVersion: CURRENT_SCHEMA_VERSION,
+    data: data.data,
+  };
 }

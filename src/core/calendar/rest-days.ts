@@ -35,11 +35,7 @@ export function nextActiveDay(day: LogicalDay, ctx: RestContext): LogicalDay {
 }
 
 export type RestDayError =
-  | 'out-of-range'
-  | 'already-rest'
-  | 'weekly-rest-day'
-  | 'has-attempts'
-  | 'budget-exceeded';
+  'out-of-range' | 'already-rest' | 'weekly-rest-day' | 'has-attempts' | 'budget-exceeded';
 
 export const REST_DAY_ERROR_MESSAGES: Record<RestDayError, string> = {
   'out-of-range': `Rest days can be set for yesterday, today, or up to ${MAX_REST_DAYS_AHEAD} days ahead.`,

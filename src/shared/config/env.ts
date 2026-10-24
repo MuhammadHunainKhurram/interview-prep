@@ -13,9 +13,17 @@ const EnvSchema = z
   .superRefine((env, ctx) => {
     if (env.WXT_STORAGE_BACKEND === 'supabase') {
       if (!env.WXT_SUPABASE_URL)
-        ctx.addIssue({ code: 'custom', path: ['WXT_SUPABASE_URL'], message: 'Required for the supabase backend' });
+        ctx.addIssue({
+          code: 'custom',
+          path: ['WXT_SUPABASE_URL'],
+          message: 'Required for the supabase backend',
+        });
       if (!env.WXT_SUPABASE_ANON_KEY)
-        ctx.addIssue({ code: 'custom', path: ['WXT_SUPABASE_ANON_KEY'], message: 'Required for the supabase backend' });
+        ctx.addIssue({
+          code: 'custom',
+          path: ['WXT_SUPABASE_ANON_KEY'],
+          message: 'Required for the supabase backend',
+        });
     }
   });
 
