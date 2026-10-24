@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { LIST_IDS, LIST_LABELS, type ListId } from '@/core/catalog/schema';
 import type { ProblemWithStatus } from '@/shared/messaging/contract';
-import { Card, EmptyState, ErrorNote, ProgressBar, Spinner } from '@/shared/ui/components';
+import { Card, EmptyState, ErrorNote, ProgressBar, Select, Spinner } from '@/shared/ui/components';
 import { cx } from '@/shared/ui/tones';
 import { useRequest } from '@/shared/ui/hooks';
 import { ProblemRow } from './ProblemRow';
@@ -69,18 +69,18 @@ export function ProblemsPage() {
           maxLength={100}
           className="min-w-48 flex-1 rounded-xl border-2 border-border bg-surface px-3 py-2 font-semibold placeholder:text-faint"
         />
-        <select
+        <Select
           aria-label="Filter"
           value={filter}
           onChange={(e) => setFilter(e.target.value as Filter)}
-          className="rounded-xl border-2 border-border bg-surface px-3 py-2 font-bold"
+          id="problems-filter"
         >
           {FILTERS.map((f) => (
             <option key={f.id} value={f.id}>
               {f.label}
             </option>
           ))}
-        </select>
+        </Select>
       </div>
 
       {active === 'unlisted' ? (

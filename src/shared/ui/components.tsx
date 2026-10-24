@@ -1,7 +1,7 @@
 import type { ComponentProps, ReactNode } from 'react';
 import type { Difficulty } from '@/core/catalog/schema';
 import { OUTCOME_LABELS, type Outcome } from '@/core/model/records';
-import { IconBulb, IconCheck, IconCheckDouble, IconX } from './icons';
+import { IconBulb, IconCheck, IconCheckDouble, IconChevronDown, IconX } from './icons';
 import { cx, OUTCOME_TONE, type Tone } from './tones';
 
 const TONE_BUTTON: Record<Tone, string> = {
@@ -49,6 +49,48 @@ export function Button({
       )}
       {...props}
     />
+  );
+}
+
+type SelectProps = Omit<ComponentProps<'select'>, 'size'> & {
+  size?: 'sm' | 'md';
+  /** Classes for the wrapper (width, margins). */
+  wrapperClassName?: string;
+};
+
+/**
+ * Native select with consistent padding and a custom arrow. The arrow gets its own
+ * space on the right so text never runs into it.
+ */
+export function Select({
+  size = 'md',
+  className,
+  wrapperClassName,
+  children,
+  ...props
+}: SelectProps) {
+  return (
+    <span className={cx('relative inline-flex', wrapperClassName)}>
+      <select
+        className={cx(
+          'w-full cursor-pointer appearance-none border-border-strong bg-surface font-bold text-text',
+          'hover:border-faint disabled:cursor-not-allowed disabled:opacity-50',
+          size === 'md' && 'h-10 rounded-xl border-2 pl-3.5 pr-10 text-sm',
+          size === 'sm' && 'h-7 rounded-lg border pl-2.5 pr-7 text-xs',
+          className,
+        )}
+        {...props}
+      >
+        {children}
+      </select>
+      <IconChevronDown
+        size={size === 'md' ? 16 : 12}
+        className={cx(
+          'pointer-events-none absolute top-1/2 -translate-y-1/2 text-muted',
+          size === 'md' ? 'right-3.5' : 'right-2',
+        )}
+      />
+    </span>
   );
 }
 

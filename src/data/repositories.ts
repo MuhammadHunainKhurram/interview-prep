@@ -1,4 +1,11 @@
-import type { Attempt, DaySnapshot, RestDay, Timer, UnlistedProblem } from '@/core/model/records';
+import type {
+  Attempt,
+  DaySnapshot,
+  RestDay,
+  Timer,
+  UiPrefs,
+  UnlistedProblem,
+} from '@/core/model/records';
 import type { Settings } from '@/core/model/settings';
 
 /** A collection of records addressed by a string key. */
@@ -45,6 +52,10 @@ export interface Repositories {
   snapshots: RecordRepository<DaySnapshot>;
   timers: RecordRepository<Timer>;
   unlisted: RecordRepository<UnlistedProblem>;
+  uiPrefs: {
+    get(): Promise<UiPrefs>;
+    save(prefs: UiPrefs): Promise<void>;
+  };
   quarantine: {
     list(): Promise<QuarantineEntry[]>;
     clear(): Promise<void>;

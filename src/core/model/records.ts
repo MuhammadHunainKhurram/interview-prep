@@ -99,6 +99,21 @@ export const UnlistedProblemSchema = z.object({
 });
 export type UnlistedProblem = z.infer<typeof UnlistedProblemSchema>;
 
+/** Where the on-page toolbar sits, as distances from the viewport's right and top edges. */
+export const ToolbarPositionSchema = z.object({
+  right: z.number().int().min(0).max(10_000),
+  top: z.number().int().min(0).max(10_000),
+});
+export type ToolbarPosition = z.infer<typeof ToolbarPositionSchema>;
+
+/** Per-device UI preferences. Not part of backups. */
+export const UiPrefsSchema = z.object({
+  toolbarPosition: ToolbarPositionSchema.nullable(),
+});
+export type UiPrefs = z.infer<typeof UiPrefsSchema>;
+
+export const DEFAULT_UI_PREFS: UiPrefs = { toolbarPosition: null };
+
 export function timerElapsedMs(timer: Timer, now: Date): number {
   const running = timer.startedAt ? Math.max(0, now.getTime() - Date.parse(timer.startedAt)) : 0;
   return timer.accumulatedMs + running;

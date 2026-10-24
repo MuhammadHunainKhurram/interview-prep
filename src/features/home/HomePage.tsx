@@ -1,7 +1,14 @@
 import { useState } from 'react';
 import { LIST_IDS, LIST_LABELS, type ListId } from '@/core/catalog/schema';
 import { errorMessage, send } from '@/shared/messaging/client';
-import { Card, ErrorNote, ProgressBar, SectionTitle, Spinner } from '@/shared/ui/components';
+import {
+  Card,
+  ErrorNote,
+  ProgressBar,
+  SectionTitle,
+  Select,
+  Spinner,
+} from '@/shared/ui/components';
 import { formatDay, formatLongDay, plural } from '@/shared/ui/format';
 import { useRequest } from '@/shared/ui/hooks';
 import { IconCheck, IconFlame } from '@/shared/ui/icons';
@@ -136,20 +143,20 @@ export function HomePage() {
         <SectionTitle
           hint="Your progress through each topic, in roadmap order"
           action={
-            <label className="flex items-center gap-2 text-sm font-bold text-muted">
+            <label className="flex items-center gap-3 text-sm font-bold text-muted">
               List
-              <select
+              <Select
                 id="home-active-list"
                 value={list.listId}
                 onChange={(e) => void switchList(e.target.value as ListId)}
-                className="h-9 rounded-xl border-2 border-border-strong bg-surface px-2 font-bold text-text"
+                wrapperClassName="min-w-44"
               >
                 {LIST_IDS.map((l) => (
                   <option key={l} value={l}>
                     {LIST_LABELS[l]}
                   </option>
                 ))}
-              </select>
+              </Select>
             </label>
           }
         >

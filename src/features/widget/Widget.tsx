@@ -9,13 +9,22 @@ import {
   type Outcome,
 } from '@/core/model/records';
 import { errorMessage, send } from '@/shared/messaging/client';
+import type { ToolbarPosition } from '@/core/model/records';
 import { AppError, type WidgetState } from '@/shared/messaging/contract';
-import { Badge, Button, DifficultyBadge, OutcomeBadge, OutcomeIcon } from '@/shared/ui/components';
+import {
+  Badge,
+  Button,
+  DifficultyBadge,
+  OutcomeBadge,
+  OutcomeIcon,
+  Select,
+} from '@/shared/ui/components';
 import { formatClock, formatDuration, relativeDay } from '@/shared/ui/format';
 import { onStorageChange, useNow, useTheme } from '@/shared/ui/hooks';
 import {
   IconChevronDown,
   IconChevronUp,
+  IconGrip,
   IconPause,
   IconPlay,
   IconReset,
@@ -25,6 +34,34 @@ import { cx } from '@/shared/ui/tones';
 
 const UNDO_MS = 5000;
 const Z_TOP = 2147483647;
+const DEFAULT_POSITION: ToolbarPosition = { right: 16, top: 72 };
+const EDGE = 8;
+const PANEL_WIDTH = 320;
+const KEY_STEP = 16;
+
+/** Keeps the toolbar fully on screen. */
+function clampPosition(
+  p: ToolbarPosition,
+  size: { w: number; h: number },
+  viewport: { w: number; h: number },
+): ToolbarPosition {
+  const maxRight = Math.max(EDGE, viewport.w - size.w - EDGE);
+  const maxTop = Math.max(EDGE, viewport.h - size.h - EDGE);
+  return {
+    right: Math.round(Math.min(Math.max(p.right, EDGE), maxRight)),
+    top: Math.round(Math.min(Math.max(p.top, EDGE), maxTop)),
+  };
+}
+
+function useViewport() {
+  const [vp, setVp] = useState(() => ({ w: window.innerWidth, h: window.innerHeight }));
+  useEffect(() => {
+    const onResize = () => setVp({ w: window.innerWidth, h: window.innerHeight });
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
+  return vp;
+}
 
 interface Saved {
   id: string;
@@ -74,6 +111,15 @@ export function Widget({
   const [saved, setSaved] = useState<Saved | null>(null);
   const [stale, setStale] = useState<StalePrompt | null>(null);
   const firstOutcomeRef = useRef<HTMLButtonElement>(null);
+  const groupRef = useRef<HTMLDivElement>(null);
+  const toolbarRef = useRef<HTMLDivElement>(null);
+  const dragRef = useRef<{ x: number; y: number; from: ToolbarPosition; moved: boolean } | null>(
+    null,
+  );
+  /** Position while dragging or after a move, before storage catches up. */
+  const [dragPos, setDragPos] = useState<ToolbarPosition | null>(null);
+  const [toolbarSize, setToolbarSize] = useState({ w: 236, h: 50 });
+  const viewport = useViewport();
   const problemId = state?.problem.id;
   const patterns = edited ?? state?.defaultPatterns ?? [];
   const setPatterns = setEdited;
@@ -85,6 +131,25 @@ export function Widget({
   useEffect(() => onOpenChange(open), [open, onOpenChange]);
 
   useTheme(state?.theme, host);
+
+  useEffect(() => {
+    const el = toolbarRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(() => setToolbarSize({ w: el.offsetWidth, h: el.offsetHeight }));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  // Close the details panel on a click anywhere outside the toolbar and panel.
+  useEffect(() => {
+    if (!open) return;
+    const onPointerDown = (e: PointerEvent) => {
+      const group = groupRef.current;
+      if (group && !e.composedPath().includes(group)) setOpen(false);
+    };
+    document.addEventListener('pointerdown', onPointerDown, true);
+    return () => document.removeEventListener('pointerdown', onPointerDown, true);
+  }, [open]);
 
   const load = useCallback(() => {
     send('widget/state', {
@@ -174,19 +239,110 @@ export function Widget({
 
   const running = timer?.status === 'running';
 
+  const position = clampPosition(
+    dragPos ?? state?.toolbarPosition ?? DEFAULT_POSITION,
+    toolbarSize,
+    viewport,
+  );
+  // Open the panel upward when the toolbar sits in the lower half of the screen,
+  // and align it to the toolbar's left edge when there's no room to the left.
+  const openUp = position.top + toolbarSize.h / 2 > viewport.h / 2;
+  const toolbarRightX = viewport.w - position.right;
+  const alignLeft = toolbarRightX - PANEL_WIDTH < EDGE;
+  const panelMaxHeight = Math.max(
+    160,
+    openUp ? position.top - 24 : viewport.h - position.top - toolbarSize.h - 24,
+  );
+
+  function savePosition(p: ToolbarPosition | null) {
+    void send('widget/position', { position: p }).catch((e: unknown) => setError(errorMessage(e)));
+  }
+
+  function moveTo(p: ToolbarPosition) {
+    const next = clampPosition(p, toolbarSize, viewport);
+    setDragPos(next);
+    return next;
+  }
+
   return (
     <div className="ip-root">
       {/* Top right: outcomes */}
       <div
-        className="fixed right-4 top-[72px] flex flex-col items-end gap-2"
-        style={{ zIndex: Z_TOP }}
+        ref={groupRef}
+        className={cx(
+          'fixed flex gap-2',
+          openUp ? 'flex-col-reverse' : 'flex-col',
+          alignLeft ? 'items-start' : 'items-end',
+        )}
+        style={{
+          zIndex: Z_TOP,
+          right: alignLeft ? undefined : position.right,
+          left: alignLeft ? toolbarRightX - toolbarSize.w : undefined,
+          ...(openUp
+            ? { bottom: viewport.h - position.top - toolbarSize.h }
+            : { top: position.top }),
+        }}
         onKeyDown={(e) => e.key === 'Escape' && setOpen(false)}
       >
         <div
+          ref={toolbarRef}
           role="toolbar"
           aria-label="How did it go?"
           className="flex items-center gap-1.5 rounded-2xl border border-border bg-surface p-1.5 text-text shadow-[0_8px_24px_rgb(0_0_0/0.18)]"
         >
+          <button
+            type="button"
+            aria-label="Move toolbar"
+            title="Drag to move. Double-click to put it back."
+            className="flex h-9 w-5 cursor-grab touch-none items-center justify-center rounded-lg text-faint hover:bg-surface-2 hover:text-muted active:cursor-grabbing"
+            onPointerDown={(e) => {
+              e.preventDefault();
+              e.currentTarget.setPointerCapture(e.pointerId);
+              dragRef.current = { x: e.clientX, y: e.clientY, from: position, moved: false };
+            }}
+            onPointerMove={(e) => {
+              const d = dragRef.current;
+              if (!d) return;
+              const dx = e.clientX - d.x;
+              const dy = e.clientY - d.y;
+              if (!d.moved && Math.hypot(dx, dy) < 3) return;
+              d.moved = true;
+              moveTo({ right: d.from.right - dx, top: d.from.top + dy });
+            }}
+            onPointerUp={(e) => {
+              const d = dragRef.current;
+              dragRef.current = null;
+              if (!d?.moved) return;
+              savePosition(
+                clampPosition(
+                  { right: d.from.right - (e.clientX - d.x), top: d.from.top + (e.clientY - d.y) },
+                  toolbarSize,
+                  viewport,
+                ),
+              );
+            }}
+            onPointerCancel={() => (dragRef.current = null)}
+            onDoubleClick={() => {
+              setDragPos(DEFAULT_POSITION);
+              savePosition(null);
+            }}
+            onKeyDown={(e) => {
+              const delta: Record<string, [number, number]> = {
+                ArrowLeft: [KEY_STEP, 0],
+                ArrowRight: [-KEY_STEP, 0],
+                ArrowUp: [0, -KEY_STEP],
+                ArrowDown: [0, KEY_STEP],
+              };
+              const step = delta[e.key];
+              if (!step) return;
+              e.preventDefault();
+              savePosition(
+                moveTo({ right: position.right + step[0], top: position.top + step[1] }),
+              );
+            }}
+          >
+            <IconGrip size={16} />
+          </button>
           {OUTCOMES.map((o, i) => (
             <button
               key={o}
@@ -279,7 +435,8 @@ export function Widget({
           <div
             role="region"
             aria-label="Problem details"
-            className="flex max-h-[calc(100vh-200px)] w-[320px] flex-col gap-4 overflow-y-auto rounded-2xl border border-border bg-surface p-4 text-text shadow-[0_8px_24px_rgb(0_0_0/0.18)]"
+            style={{ maxHeight: panelMaxHeight }}
+            className="flex w-[320px] flex-col gap-4 overflow-y-auto rounded-2xl border border-border bg-surface p-4 text-text shadow-[0_8px_24px_rgb(0_0_0/0.18)]"
           >
             {!state && !error && <p className="text-muted">Loading…</p>}
             {state && (
@@ -322,13 +479,13 @@ export function Widget({
                       </button>
                     ))}
                     {patterns.length < LIMITS_RECORDS.maxPatterns && (
-                      <select
+                      <Select
                         aria-label="Add a pattern"
                         value=""
                         onChange={(e) =>
                           e.target.value && setPatterns([...patterns, e.target.value])
                         }
-                        className="h-6 rounded-md border border-border-strong bg-surface px-1.5 text-xs font-bold text-muted"
+                        size="sm"
                       >
                         <option value="">Add pattern</option>
                         {ALL_PATTERNS.filter((p) => !patterns.includes(p)).map((p) => (
@@ -336,7 +493,7 @@ export function Widget({
                             {p}
                           </option>
                         ))}
-                      </select>
+                      </Select>
                     )}
                   </div>
                 </section>

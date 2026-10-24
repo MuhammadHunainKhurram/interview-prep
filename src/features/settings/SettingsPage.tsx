@@ -4,7 +4,7 @@ import { LIST_IDS, LIST_LABELS } from '@/core/catalog/schema';
 import { LIMITS, SettingsSchema, type Settings } from '@/core/model/settings';
 import { errorMessage, send } from '@/shared/messaging/client';
 import { AppError } from '@/shared/messaging/contract';
-import { Button, Card, CardTitle, ErrorNote, Spinner } from '@/shared/ui/components';
+import { Button, Card, CardTitle, ErrorNote, Select, Spinner } from '@/shared/ui/components';
 import { cx } from '@/shared/ui/tones';
 import { useRequest } from '@/shared/ui/hooks';
 import { DataSection } from './DataSection';
@@ -137,17 +137,17 @@ export function SettingsPage() {
         <div className="grid gap-4 sm:grid-cols-2">
           <label className="flex flex-col gap-1.5">
             <span className="text-sm font-bold">Working on</span>
-            <select
+            <Select
               value={draft.activeList}
               onChange={(e) => set('activeList', e.target.value as Settings['activeList'])}
-              className="rounded-xl border-2 border-border bg-surface-2 px-3 py-2 font-bold"
+              id="settings-active-list"
             >
               {LIST_IDS.map((l) => (
                 <option key={l} value={l}>
                   {LIST_LABELS[l]}
                 </option>
               ))}
-            </select>
+            </Select>
             <span className="text-xs text-muted">
               New problems come from this list. Progress on other lists is kept.
             </span>
@@ -236,17 +236,17 @@ export function SettingsPage() {
         <div className="grid gap-4 sm:grid-cols-2">
           <label className="flex flex-col gap-1.5">
             <span className="text-sm font-bold">New day starts at</span>
-            <select
+            <Select
               value={draft.rolloverHour}
               onChange={(e) => set('rolloverHour', Number(e.target.value))}
-              className="rounded-xl border-2 border-border bg-surface-2 px-3 py-2 font-bold"
+              id="settings-rollover-hour"
             >
               {Array.from({ length: LIMITS.rolloverHour.max + 1 }, (_, h) => (
                 <option key={h} value={h}>
                   {hourLabel(h)}
                 </option>
               ))}
-            </select>
+            </Select>
             <span className="text-xs text-muted">
               Problems solved before this time count for the previous day.
             </span>

@@ -4,7 +4,10 @@ import {
   DaySnapshotSchema,
   RestDaySchema,
   TimerSchema,
+  UiPrefsSchema,
   UnlistedProblemSchema,
+  DEFAULT_UI_PREFS,
+  type UiPrefs,
 } from '@/core/model/records';
 import { DEFAULT_SETTINGS, SettingsSchema, type Settings } from '@/core/model/settings';
 import type { StorageDriver } from './driver';
@@ -26,6 +29,7 @@ export const KEYS = {
   snapshots: 'snapshots',
   timers: 'timers',
   unlisted: 'unlisted',
+  uiPrefs: 'uiPrefs',
   quarantine: 'quarantine',
   safetyCopy: 'safetyCopy',
 } as const;
@@ -176,6 +180,17 @@ export class LocalRepositories implements Repositories {
     save: async (settings: Settings) => {
       await this.init();
       await this.driver.set({ [KEYS.settings]: SettingsSchema.parse(settings) });
+    },
+  };
+
+  uiPrefs = {
+    get: async (): Promise<UiPrefs> => {
+      const parsed = UiPrefsSchema.safeParse(await this.read(KEYS.uiPrefs));
+      return parsed.success ? parsed.data : DEFAULT_UI_PREFS;
+    },
+    save: async (prefs: UiPrefs) => {
+      await this.init();
+      await this.driver.set({ [KEYS.uiPrefs]: UiPrefsSchema.parse(prefs) });
     },
   };
 

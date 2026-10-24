@@ -84,6 +84,16 @@ export const IconChevronUp = (p: IconProps) => (
     <path d="M6 15l6-6 6 6" />
   </Icon>
 );
+export const IconGrip = (p: IconProps) => (
+  <Icon {...p}>
+    <circle cx="9" cy="6" r="1.2" fill="currentColor" stroke="none" />
+    <circle cx="15" cy="6" r="1.2" fill="currentColor" stroke="none" />
+    <circle cx="9" cy="12" r="1.2" fill="currentColor" stroke="none" />
+    <circle cx="15" cy="12" r="1.2" fill="currentColor" stroke="none" />
+    <circle cx="9" cy="18" r="1.2" fill="currentColor" stroke="none" />
+    <circle cx="15" cy="18" r="1.2" fill="currentColor" stroke="none" />
+  </Icon>
+);
 export const IconHome = (p: IconProps) => (
   <Icon {...p}>
     <path d="M4 11l8-7 8 7v8a1 1 0 01-1 1h-4v-6H9v6H5a1 1 0 01-1-1z" />

@@ -72,6 +72,48 @@ test('undo removes the attempt', async ({ context }) => {
   await expect(details.getByText('New today')).toBeVisible();
 });
 
+test('the toolbar can be dragged, remembers its spot, and the panel closes on outside click', async ({
+  context,
+}) => {
+  const page = await context.newPage();
+  await page.setViewportSize({ width: 1280, height: 720 });
+  await page.goto('https://neetcode.io/problems/duplicate-integer');
+  const toolbar = page.getByRole('toolbar', { name: 'How did it go?' });
+  const grip = toolbar.getByRole('button', { name: 'Move toolbar' });
+  await expect(grip).toBeVisible();
+
+  const before = (await toolbar.boundingBox())!;
+  const g = (await grip.boundingBox())!;
+  await page.mouse.move(g.x + g.width / 2, g.y + g.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(g.x - 400, g.y + 300, { steps: 8 });
+  await page.mouse.up();
+  const after = (await toolbar.boundingBox())!;
+  expect(after.x).toBeLessThan(before.x - 350);
+  expect(after.y).toBeGreaterThan(before.y + 250);
+
+  // Persists across reloads.
+  await page.reload();
+  await expect.poll(async () => (await toolbar.boundingBox())!.x).toBeLessThan(before.x - 350);
+
+  // In the lower half, the panel opens above the toolbar.
+  await toolbar.getByRole('button', { name: 'Show details' }).click();
+  const details = page.getByRole('region', { name: 'Problem details' });
+  await expect(details).toBeVisible();
+  const panel = (await details.boundingBox())!;
+  const bar = (await toolbar.boundingBox())!;
+  expect(panel.y + panel.height).toBeLessThanOrEqual(bar.y + 1);
+  if (SHOTS) await page.screenshot({ path: `${SHOTS}/widget-moved.png` });
+
+  // Clicking elsewhere on the page closes it.
+  await page.mouse.click(200, 200);
+  await expect(details).toBeHidden();
+
+  // Double-click on the grip puts it back.
+  await grip.dblclick();
+  await expect.poll(async () => (await toolbar.boundingBox())!.x).toBeGreaterThan(before.x - 5);
+});
+
 test('settings reject out-of-range values', async ({ context, extensionId }) => {
   const page = await context.newPage();
   await page.goto(`chrome-extension://${extensionId}/dashboard.html#/settings`);

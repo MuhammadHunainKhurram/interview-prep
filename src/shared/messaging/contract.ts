@@ -7,6 +7,8 @@ import {
   LIMITS_RECORDS,
   OutcomeSchema,
   ProblemIdSchema,
+  ToolbarPositionSchema,
+  type ToolbarPosition,
   type Attempt,
   type Outcome,
   type RestDay,
@@ -32,6 +34,7 @@ export const RequestSchemas = {
       title: z.string().max(300).optional(),
     })
     .strict(),
+  'widget/position': z.object({ position: ToolbarPositionSchema.nullable() }).strict(),
   'timer/start': ProblemRef,
   'timer/pause': ProblemRef,
   'timer/reset': ProblemRef,
@@ -140,6 +143,7 @@ export interface WidgetState {
   defaultPatterns: string[];
   preferredSite: Settings['preferredSite'];
   theme: Settings['theme'];
+  toolbarPosition: ToolbarPosition | null;
 }
 
 export interface TodayView {
@@ -211,6 +215,7 @@ export interface BackupPreview {
 
 export interface ResponseMap {
   'widget/state': WidgetState;
+  'widget/position': null;
   'timer/start': Timer;
   'timer/pause': Timer;
   'timer/reset': null;

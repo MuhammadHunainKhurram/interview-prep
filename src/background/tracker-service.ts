@@ -332,7 +332,18 @@ export class TrackerService {
               : [],
         preferredSite: ctx.settings.preferredSite,
         theme: ctx.settings.theme,
+        toolbarPosition: (await this.repos.uiPrefs.get()).toolbarPosition,
       };
+    });
+  }
+
+  setToolbarPosition({ position }: ParsedRequest<'widget/position'>) {
+    return this.exclusive(async () => {
+      await this.repos.uiPrefs.save({
+        ...(await this.repos.uiPrefs.get()),
+        toolbarPosition: position,
+      });
+      return null;
     });
   }
 

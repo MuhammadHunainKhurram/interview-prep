@@ -80,6 +80,38 @@ describe('widget state', () => {
   });
 });
 
+describe('toolbar position', () => {
+  it('saves and returns the dragged position, and can be reset', async () => {
+    await service.setToolbarPosition({ position: { right: 120, top: 300 } });
+    expect(
+      (await service.widgetState({ site: 'neetcode', slug: 'duplicate-integer' })).toolbarPosition,
+    ).toEqual({ right: 120, top: 300 });
+    await service.setToolbarPosition({ position: null });
+    expect(
+      (await service.widgetState({ site: 'neetcode', slug: 'duplicate-integer' })).toolbarPosition,
+    ).toBeNull();
+  });
+
+  it('rejects out-of-range positions', async () => {
+    const res = await dispatch(
+      createHandlers({
+        service,
+        openDashboard: async () => undefined,
+        onSettingsChanged: async () => undefined,
+        onDataChanged: async () => undefined,
+      }),
+      {
+        channel: 'interview-prep',
+        type: 'widget/position',
+        payload: { position: { right: -5, top: 1.5 } },
+      },
+      { id: 'me' },
+      'me',
+    );
+    expect(res).toMatchObject({ ok: false, error: { code: 'validation' } });
+  });
+});
+
 describe('recording attempts', () => {
   it('records the timer duration and stops the timer', async () => {
     await service.timerStart({ problemId: CONTAINS_DUPLICATE });

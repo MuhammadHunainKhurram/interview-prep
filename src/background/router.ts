@@ -34,6 +34,7 @@ export function createHandlers({
     };
   return {
     'widget/state': (p) => s.widgetState(p),
+    'widget/position': (p) => s.setToolbarPosition(p),
     'timer/start': (p) => s.timerStart(p),
     'timer/pause': (p) => s.timerPause(p),
     'timer/reset': (p) => s.timerReset(p),
