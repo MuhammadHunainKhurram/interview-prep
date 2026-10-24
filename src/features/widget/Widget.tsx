@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { ProblemLocation } from '@/core/catalog/url';
-import { ALL_PATTERNS } from '@/core/model/patterns';
 import {
   LIMITS_RECORDS,
   OUTCOME_LABELS,
@@ -11,16 +10,10 @@ import {
 import { errorMessage, send } from '@/shared/messaging/client';
 import type { ToolbarPosition } from '@/core/model/records';
 import { AppError, type WidgetState } from '@/shared/messaging/contract';
-import {
-  Badge,
-  Button,
-  DifficultyBadge,
-  OutcomeBadge,
-  OutcomeIcon,
-  Select,
-} from '@/shared/ui/components';
+import { Badge, Button, DifficultyBadge, OutcomeBadge, OutcomeIcon } from '@/shared/ui/components';
 import { formatClock, formatDuration, relativeDay } from '@/shared/ui/format';
 import { onStorageChange, useNow, useTheme } from '@/shared/ui/hooks';
+import { PatternPicker } from '@/shared/ui/PatternPicker';
 import {
   IconChevronDown,
   IconChevronUp,
@@ -466,36 +459,11 @@ export function Widget({
 
                 <section aria-label="Pattern">
                   <p className="mb-1.5 text-[13px] font-bold text-muted">Pattern</p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {patterns.map((p) => (
-                      <button
-                        key={p}
-                        type="button"
-                        onClick={() => setPatterns(patterns.filter((x) => x !== p))}
-                        className="flex h-6 items-center gap-1 rounded-md bg-accent-soft px-2 text-xs font-bold text-accent-text"
-                        aria-label={`Remove ${p}`}
-                      >
-                        {p} <IconX size={10} />
-                      </button>
-                    ))}
-                    {patterns.length < LIMITS_RECORDS.maxPatterns && (
-                      <Select
-                        aria-label="Add a pattern"
-                        value=""
-                        onChange={(e) =>
-                          e.target.value && setPatterns([...patterns, e.target.value])
-                        }
-                        size="sm"
-                      >
-                        <option value="">Add pattern</option>
-                        {ALL_PATTERNS.filter((p) => !patterns.includes(p)).map((p) => (
-                          <option key={p} value={p}>
-                            {p}
-                          </option>
-                        ))}
-                      </Select>
-                    )}
-                  </div>
+                  <PatternPicker
+                    value={patterns}
+                    onChange={setPatterns}
+                    max={LIMITS_RECORDS.maxPatterns}
+                  />
                 </section>
 
                 <section aria-label="Notes">

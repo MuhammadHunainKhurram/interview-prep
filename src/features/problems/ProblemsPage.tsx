@@ -1,7 +1,16 @@
 import { useMemo, useState } from 'react';
 import { LIST_IDS, LIST_LABELS, type ListId } from '@/core/catalog/schema';
 import type { ProblemWithStatus } from '@/shared/messaging/contract';
-import { Card, EmptyState, ErrorNote, ProgressBar, Select, Spinner } from '@/shared/ui/components';
+import {
+  Button,
+  Card,
+  EmptyState,
+  ErrorNote,
+  ProgressBar,
+  Select,
+  Spinner,
+} from '@/shared/ui/components';
+import { IconChevronDown, IconChevronRight } from '@/shared/ui/icons';
 import { cx } from '@/shared/ui/tones';
 import { useRequest } from '@/shared/ui/hooks';
 import { ProblemRow } from './ProblemRow';
@@ -92,8 +101,38 @@ export function ProblemsPage() {
   );
 }
 
+/** Collapsed sections per list, remembered in this browser. */
+function useCollapsedSections(listId: ListId): [Set<string>, (next: Set<string>) => void] {
+  const key = `interview-prep:collapsed:${listId}`;
+  const read = (): Set<string> => {
+    try {
+      const raw = localStorage.getItem(key);
+      const parsed: unknown = raw ? JSON.parse(raw) : [];
+      return new Set(Array.isArray(parsed) ? parsed.filter((x) => typeof x === 'string') : []);
+    } catch {
+      return new Set();
+    }
+  };
+  const [state, setState] = useState<{ key: string; value: Set<string> }>(() => ({
+    key,
+    value: read(),
+  }));
+  // Switching lists: load that list's saved state (adjusting state during render).
+  if (state.key !== key) setState({ key, value: read() });
+  const set = (next: Set<string>) => {
+    setState({ key, value: next });
+    try {
+      localStorage.setItem(key, JSON.stringify([...next]));
+    } catch {
+      // Storage can be unavailable; collapsing still works for this visit.
+    }
+  };
+  return [state.key === key ? state.value : read(), set];
+}
+
 function ListView({ listId, query, filter }: { listId: ListId; query: string; filter: Filter }) {
   const { data, error, reload } = useRequest('problems/get', { listId });
+  const [collapsed, setCollapsed] = useCollapsedSections(listId);
   const sections = useMemo(
     () =>
       data?.sections
@@ -122,31 +161,67 @@ function ListView({ listId, query, filter }: { listId: ListId; query: string; fi
         />
       </Card>
       {sections.length === 0 && <EmptyState title="No problems match." />}
+      {sections.length > 0 && (
+        <div className="-mb-2 flex justify-end gap-2">
+          <Button
+            size="sm"
+            onClick={() => setCollapsed(new Set(data.sections.map((x) => x.section)))}
+          >
+            Collapse all
+          </Button>
+          <Button size="sm" onClick={() => setCollapsed(new Set())}>
+            Expand all
+          </Button>
+        </div>
+      )}
       {sections.map((s) => {
         const solved = s.problems.filter((p) => p.status?.everSolved).length;
+        const searching = !!query || filter !== 'all';
+        const expanded = searching || !collapsed.has(s.section);
+        const bodyId = `section-${s.section.replace(/\W+/g, '-').toLowerCase()}`;
         return (
-          <Card key={s.section} as="article">
-            <details open={!!query || filter !== 'all' || solved < s.problems.length}>
-              <summary className="flex cursor-pointer list-none items-center gap-4">
-                <h2 className="flex-1 text-base font-extrabold">{s.section}</h2>
-                <span className="text-sm font-bold text-muted">
+          <Card key={s.section} as="article" flush>
+            <h2>
+              <button
+                type="button"
+                aria-expanded={expanded}
+                aria-controls={bodyId}
+                disabled={searching}
+                onClick={() => {
+                  const next = new Set(collapsed);
+                  if (next.has(s.section)) next.delete(s.section);
+                  else next.add(s.section);
+                  setCollapsed(next);
+                }}
+                className="flex w-full items-center gap-4 rounded-2xl px-5 py-4 text-left hover:bg-surface-2/60 disabled:cursor-default disabled:hover:bg-transparent"
+              >
+                {expanded ? (
+                  <IconChevronDown size={18} className="shrink-0 text-muted" />
+                ) : (
+                  <IconChevronRight size={18} className="shrink-0 text-muted" />
+                )}
+                <span className="flex-1 text-base font-extrabold">{s.section}</span>
+                <span className="text-sm font-bold tabular-nums text-muted">
                   {solved}/{s.problems.length}
                 </span>
-                <span className="w-32">
+                <span className="hidden w-32 sm:block">
                   <ProgressBar
                     size="sm"
+                    tone={solved === s.problems.length ? 'green' : 'accent'}
                     value={solved}
                     max={s.problems.length}
                     label={`${s.section} progress`}
                   />
                 </span>
-              </summary>
-              <ul className="mt-3">
+              </button>
+            </h2>
+            {expanded && (
+              <ul id={bodyId} className="px-5 pb-3">
                 {s.visible.map((p) => (
                   <ProblemRow key={p.id} problem={p} today={data.today} />
                 ))}
               </ul>
-            </details>
+            )}
           </Card>
         );
       })}

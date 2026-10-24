@@ -114,6 +114,66 @@ test('the toolbar can be dragged, remembers its spot, and the panel closes on ou
   await expect.poll(async () => (await toolbar.boundingBox())!.x).toBeGreaterThan(before.x - 5);
 });
 
+test('pattern picker is a short searchable list', async ({ context }) => {
+  const page = await context.newPage();
+  await page.setViewportSize({ width: 1280, height: 720 });
+  await page.goto('https://neetcode.io/problems/duplicate-integer');
+  await page.getByRole('button', { name: 'Show details' }).click();
+  const details = page.getByRole('region', { name: 'Problem details' });
+  await details.getByRole('button', { name: '+ Add pattern' }).click();
+  const list = details.getByRole('listbox', { name: 'Patterns' });
+  await expect(list).toBeVisible();
+  expect((await list.boundingBox())!.height).toBeLessThanOrEqual(241);
+  if (SHOTS) await page.screenshot({ path: `${SHOTS}/pattern-picker.png` });
+
+  await details.getByRole('combobox', { name: 'Search patterns' }).fill('slid');
+  await expect(list.getByRole('option')).toHaveCount(1);
+  await page.keyboard.press('Enter');
+  await expect(details.getByRole('button', { name: 'Remove Sliding Window' })).toBeVisible();
+  await expect(list).toBeHidden();
+
+  // Escape closes the picker without closing the details panel.
+  await details.getByRole('button', { name: '+ Add pattern' }).click();
+  await page.keyboard.press('Escape');
+  await expect(list).toBeHidden();
+  await expect(details).toBeVisible();
+});
+
+test('problem sections collapse and stay collapsed', async ({ context, extensionId }) => {
+  const page = await context.newPage();
+  await page.goto(`chrome-extension://${extensionId}/dashboard.html#/problems`);
+  const header = page.getByRole('button', { name: /^Arrays & Hashing/ });
+  await expect(header).toHaveAttribute('aria-expanded', 'true');
+  await expect(page.getByText('Contains Duplicate')).toBeVisible();
+
+  await header.click();
+  await expect(header).toHaveAttribute('aria-expanded', 'false');
+  await expect(page.getByText('Contains Duplicate')).toBeHidden();
+
+  await page.reload();
+  await expect(page.getByRole('button', { name: /^Arrays & Hashing/ })).toHaveAttribute(
+    'aria-expanded',
+    'false',
+  );
+
+  // Searching shows matches even in collapsed sections.
+  await page.getByRole('searchbox', { name: 'Search problems' }).fill('duplicate');
+  await expect(page.getByText('Contains Duplicate')).toBeVisible();
+  await page.getByRole('searchbox', { name: 'Search problems' }).fill('');
+
+  await page.getByRole('button', { name: 'Collapse all' }).click();
+  await expect(page.getByRole('button', { name: /^Two Pointers/ })).toHaveAttribute(
+    'aria-expanded',
+    'false',
+  );
+  if (SHOTS) await page.screenshot({ path: `${SHOTS}/problems-collapsed.png`, fullPage: true });
+  await page.getByRole('button', { name: 'Expand all' }).click();
+  await expect(page.getByRole('button', { name: /^Arrays & Hashing/ })).toHaveAttribute(
+    'aria-expanded',
+    'true',
+  );
+});
+
 test('settings reject out-of-range values', async ({ context, extensionId }) => {
   const page = await context.newPage();
   await page.goto(`chrome-extension://${extensionId}/dashboard.html#/settings`);
@@ -153,6 +213,12 @@ test('themes tab changes the accent everywhere', async ({ context, extensionId }
   await expect
     .poll(() => dash.evaluate(() => document.documentElement.style.getPropertyValue('--ip-accent')))
     .toBe('#2ec4b6');
+  // The tab icon is redrawn in the theme color.
+  await expect
+    .poll(() =>
+      dash.evaluate(() => document.querySelector<HTMLLinkElement>('link[rel="icon"]')?.href ?? ''),
+    )
+    .toMatch(/^blob:/);
 
   await dash.getByRole('radio', { name: /Light/ }).click();
   await expect

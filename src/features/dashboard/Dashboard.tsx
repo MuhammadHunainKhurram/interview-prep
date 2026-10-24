@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { setFavicon } from '@/shared/ui/brand-icon';
 import { LogoMark } from '@/shared/ui/components';
 import { useRequest, useTheme } from '@/shared/ui/hooks';
 import { cx } from '@/shared/ui/tones';
@@ -13,6 +14,10 @@ export function Dashboard() {
   const [route, setRoute] = useState(currentRoute);
   const settings = useRequest('settings/get', {});
   useTheme(settings.data?.theme, settings.data?.accent);
+  const accent = settings.data?.accent;
+  useEffect(() => {
+    if (accent) void setFavicon(accent);
+  }, [accent]);
 
   useEffect(() => {
     const onHash = () => setRoute(currentRoute());

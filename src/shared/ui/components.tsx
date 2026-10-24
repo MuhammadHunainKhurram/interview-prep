@@ -99,13 +99,18 @@ export function Card({
   className,
   children,
   as: As = 'section',
+  flush,
 }: {
   className?: string;
   children: ReactNode;
   as?: 'section' | 'div' | 'article';
+  /** No inner padding: the content handles its own spacing. */
+  flush?: boolean;
 }) {
   return (
-    <As className={cx('rounded-2xl border border-border bg-surface p-5', className)}>{children}</As>
+    <As className={cx('rounded-2xl border border-border bg-surface', !flush && 'p-5', className)}>
+      {children}
+    </As>
   );
 }
 

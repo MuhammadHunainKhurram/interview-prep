@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from 'react';
-import { ALL_PATTERNS } from '@/core/model/patterns';
 import { LIMITS_RECORDS, OUTCOME_LABELS, OUTCOMES, type Outcome } from '@/core/model/records';
 import { errorMessage, send } from '@/shared/messaging/client';
 import type { AttemptView } from '@/shared/messaging/contract';
@@ -14,6 +13,7 @@ import {
 } from '@/shared/ui/components';
 import { formatDateTime, formatDuration } from '@/shared/ui/format';
 import { useRequest } from '@/shared/ui/hooks';
+import { PatternPicker } from '@/shared/ui/PatternPicker';
 import { IconEdit, IconTrash } from '@/shared/ui/icons';
 
 const PAGE = 50;
@@ -178,27 +178,8 @@ function EditDialog({ attempt, onClose }: { attempt: AttemptView; onClose: () =>
         </fieldset>
 
         <fieldset>
-          <legend className="mb-1.5 text-[13px] font-bold text-muted">
-            Patterns (up to {LIMITS_RECORDS.maxPatterns})
-          </legend>
-          <select
-            multiple
-            value={patterns}
-            onChange={(e) =>
-              setPatterns(
-                [...e.target.selectedOptions]
-                  .map((o) => o.value)
-                  .slice(0, LIMITS_RECORDS.maxPatterns),
-              )
-            }
-            className="h-32 w-full rounded-xl border-2 border-border bg-surface-2 p-1 text-sm"
-          >
-            {[...new Set([...patterns, ...ALL_PATTERNS])].map((p) => (
-              <option key={p} value={p}>
-                {p}
-              </option>
-            ))}
-          </select>
+          <legend className="mb-1.5 text-[13px] font-bold text-muted">Patterns</legend>
+          <PatternPicker value={patterns} onChange={setPatterns} max={LIMITS_RECORDS.maxPatterns} />
         </fieldset>
 
         <label className="flex flex-col gap-1.5">
