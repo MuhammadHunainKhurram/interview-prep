@@ -33,12 +33,17 @@ export function Widget({
   location,
   openSignal,
   host,
+  defaultOpen,
+  onOpenChange,
 }: {
   location: ProblemLocation;
   openSignal: number;
   host: HTMLElement;
+  /** Keeps the panel open when navigating between problems. */
+  defaultOpen: boolean;
+  onOpenChange: (open: boolean) => void;
 }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(defaultOpen);
   const [state, setState] = useState<WidgetState>();
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -62,6 +67,7 @@ export function Widget({
   useEffect(() => {
     if (openSignal > 0) requestAnimationFrame(() => firstOutcomeRef.current?.focus());
   }, [openSignal]);
+  useEffect(() => onOpenChange(open), [open, onOpenChange]);
 
   useTheme(state?.theme, host);
 
@@ -362,7 +368,7 @@ export function Widget({
                           size="sm"
                           disabled={saving}
                           onClick={() => void record(o)}
-                          className="normal-case tracking-normal"
+                          caps={false}
                         >
                           <OutcomeIcon outcome={o} size={14} />
                           {OUTCOME_LABELS[o]}

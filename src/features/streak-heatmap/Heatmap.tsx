@@ -70,9 +70,15 @@ export function Heatmap({ days }: { days: DayInfo[] }) {
         >
           <div className="flex gap-[3px] pl-0 text-[10px] font-bold text-muted" aria-hidden="true">
             {weeks.map((w, i) => {
+              // Label the column where a month starts. The first column gets its month
+              // only if the next month's label isn't right next to it.
+              const startsMonth = (week: (DayInfo | null)[] | undefined) =>
+                week?.find((d) => d?.day.endsWith('-01'));
               const firstOfMonth =
-                w.find((d) => d && d.day.endsWith('-01')) ??
-                (i === 0 ? w.find(Boolean) : undefined);
+                startsMonth(w) ??
+                (i === 0 && !startsMonth(weeks[1]) && !startsMonth(weeks[2])
+                  ? w.find(Boolean)
+                  : undefined);
               return (
                 <span key={i} className="w-3 overflow-visible whitespace-nowrap">
                   {firstOfMonth ? monthFormat.format(new Date(`${firstOfMonth.day}T12:00:00`)) : ''}

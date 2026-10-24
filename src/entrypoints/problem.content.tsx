@@ -20,6 +20,10 @@ export default defineContentScript({
     let ui: ShadowRootContentScriptUi<{ root: Root; host: HTMLElement }> | null = null;
     let location: ProblemLocation | null = null;
     let openSignal = 0;
+    let panelOpen = false;
+    const onOpenChange = (open: boolean) => {
+      panelOpen = open;
+    };
 
     const render = () => {
       if (!ui?.mounted || !location) return;
@@ -31,12 +35,17 @@ export default defineContentScript({
           location={location}
           openSignal={openSignal}
           host={host}
+          defaultOpen={panelOpen}
+          onOpenChange={onOpenChange}
         />,
       );
     };
 
-    const update = async () => {
-      const next = parseProblemUrl(window.location.href);
+    let lastHref = '';
+    const update = async (href: string) => {
+      if (href === lastHref) return;
+      lastHref = href;
+      const next = parseProblemUrl(href);
       if (!next) {
         ui?.remove();
         ui = null;
@@ -61,7 +70,11 @@ export default defineContentScript({
       render();
     };
 
-    ctx.addEventListener(window, 'wxt:locationchange', () => void update());
+    // The navigate event fires before location.href changes, so use its URL. Changes
+    // made by the page's own history.pushState don't always reach this isolated
+    // world's Navigation API, so a cheap poll backs it up.
+    ctx.addEventListener(window, 'wxt:locationchange', (e) => void update(e.newUrl.href));
+    ctx.setInterval(() => void update(window.location.href), 1000);
 
     browser.runtime.onMessage.addListener((message: unknown, sender) => {
       if (sender.id !== browser.runtime.id) return;
@@ -71,6 +84,6 @@ export default defineContentScript({
       render();
     });
 
-    await update();
+    await update(window.location.href);
   },
 });

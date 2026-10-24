@@ -62,4 +62,9 @@ export default tseslint.config(
     languageOptions: { globals: globals.node },
     rules: { '@typescript-eslint/no-non-null-assertion': 'off' },
   },
+  {
+    // Playwright fixtures call `use()`, which isn't React's hook.
+    files: ['e2e/**'],
+    rules: { 'react-hooks/rules-of-hooks': 'off' },
+  },
 );

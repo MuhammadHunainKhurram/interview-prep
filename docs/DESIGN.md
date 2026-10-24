@@ -1,6 +1,6 @@
 # Interview Prep — Design Doc (v1)
 
-Status: **Draft — awaiting approval**
+Status: **v1 implemented**
 Last updated: 2026-10-24
 
 A Chrome extension (Manifest V3) that tracks LeetCode/NeetCode progress, schedules
@@ -54,24 +54,26 @@ src/
     background.ts         # service worker: sole writer of data, alarms, notifications
     popup/                # today's plan + streak summary
     dashboard/            # full page: Home, Problems, Reviews, Stats, Settings
-    leetcode.content.tsx  # widget on leetcode.com/problems/*
-    neetcode.content.tsx  # widget on neetcode.io/problems/*
+    problem.content.tsx   # widget on LeetCode/NeetCode problem pages (both are SPAs,
+                          # so it runs site-wide and only shows on /problems/*)
 
   core/                   # pure TypeScript domain logic — no chrome.*, no React
+    model/                # Zod schemas for settings and records (single source of truth + limits)
     catalog/              # problem catalog, list membership, URL → problem resolution
     srs/                  # Scheduler interface + FSRS implementation
+    progress/             # per-problem progress derived from attempts
     planner/              # builds the daily plan
     streak/               # day status + streak computation
     calendar/             # "logical day" (2 AM rollover), rest-day rules
     stats/                # derived metrics
 
   data/
-    schemas/              # Zod schemas = single source of truth for data shapes
-    repositories/         # interfaces: AttemptRepo, CardRepo, SettingsRepo, RestDayRepo
-    adapters/
-      chrome-storage/     # v1 implementation
-      supabase/           # future implementation (same interfaces)
-    migrations/           # versioned, tested schema migrations
+    repositories.ts       # the storage interface (a Supabase version implements the same)
+    local-repositories.ts # chrome.storage implementation with validation + quarantine
+    migrations.ts         # versioned, tested schema migrations
+    backup.ts             # backup format, validation and migration
+
+  background/             # TrackerService (application logic) + message router
 
   features/               # one folder per feature; each owns its UI + hooks
     widget/  today/  streak-heatmap/  reviews/  rest-days/  stats/  settings/  backup/
@@ -102,7 +104,7 @@ soft deletes. That makes later sync with Supabase straightforward (last-write-wi
 id              canonical slug (LeetCode slug)
 title, difficulty
 leetcodeSlug, neetcodeSlug   (both kept; either URL resolves to the same problem)
-leetcodePremium boolean      (some NeetCode-free problems are premium on LeetCode)
+neetcodePro    boolean       (needs NeetCode Pro to open on neetcode.io)
 category        roadmap section, e.g. "Arrays & Hashing"
 lists           { blind75?, nc150?, nc250?, ncAll? } → { sectionOrder, orderInSection }
 defaultPatterns string[]
@@ -121,10 +123,12 @@ isReview        boolean
 completedAt
 ```
 
-**ReviewCard** (one per problem you've attempted; FSRS state)
+**ReviewCard** (derived, never stored)
+Recomputed by replaying a problem's attempts through FSRS. Edits, deletes and undo are
+therefore always reflected, and sync only has to move attempts.
 
 ```
-problemId, due, stability, difficulty, reps, lapses, state, lastReviewedAt
+problemId, dueDay, intervalDays, stability, difficulty, reps, lapses, lastOutcome
 ```
 
 **Settings**
@@ -154,12 +158,12 @@ switches and the background worker restarting.
 - FSRS with target retention 0.9 and `maximum_interval = maxIntervalDays` (default 365).
 - Four outcome buttons, each mapped to an FSRS rating and a color:
 
-  | Button        | Color  | FSRS rating | Effect on next review         |
-  | ------------- | ------ | ----------- | ----------------------------- |
-  | Solved easily | Blue   | Easy        | Longest gap                   |
-  | Solved        | Green  | Good        | Normal growth                 |
-  | Needed hints  | Yellow | Hard        | Shorter gap                   |
-  | Didn't solve  | Red    | Again       | Comes back soon (about 1 day) |
+  | Button        | Color  | FSRS rating | Effect on next review |
+  | ------------- | ------ | ----------- | --------------------- |
+  | Solved easily | Blue   | Easy        | Longest gap           |
+  | Solved        | Green  | Good        | Normal growth         |
+  | Needed hints  | Yellow | Hard        | Shorter gap           |
+  | Didn't solve  | Red    | Again       | Always the next day   |
 
   Colors always come with a text label too, so the meaning never depends on color alone.
 
@@ -226,7 +230,9 @@ no mascots, no confetti storms, no sounds.
 ## 8. Security and configuration
 
 - **Permissions:** `storage`, `unlimitedStorage`, `alarms`, `notifications`.
-  **Host permissions:** only `https://leetcode.com/problems/*` and `https://neetcode.io/problems/*`.
+  **Content script:** only `https://leetcode.com/*` and `https://neetcode.io/*` (both sites
+  navigate client-side, so the script must be present before a problem page opens; it
+  shows nothing outside `/problems/*`).
 - No remote code; the default Manifest V3 content security policy; no `innerHTML` or
   `dangerouslySetInnerHTML`. Notes are always displayed as plain text.
 - The background worker accepts messages only from this extension (`sender.id` check),
@@ -319,6 +325,15 @@ auto-detect "Accepted" submissions, Supabase sync across devices, AI hints and s
 - E2E (Playwright) loads the unpacked extension; covers widget → attempt → plan → streak.
 - CI: typecheck, lint, test, build on every push.
 
-## 11. Open questions
+## 11. Implementation notes
 
-None. Waiting on approval to start building.
+- FSRS growth with "Solved" each time: about 3 → 14 → 57 → 196 days. "Needed hints": 2 → 4 → 9 → 15.
+- The catalog generator (`npm run catalog`) parses NeetCode's bundle with acorn and only
+  accepts literal values; the downloaded code is never executed.
+- Navigation detection uses WXT's location event plus a 1 s URL check, because a page's
+  own `history.pushState` doesn't always reach the content script's Navigation API.
+- The widget's styles use px instead of rem (host pages set their own root font size),
+  and provide the defaults that Tailwind normally registers with `@property`, which
+  Chrome ignores inside shadow roots.
+- Outcome colors (blue/green/yellow/red) are too close for some colorblind users, so
+  every outcome is always paired with an icon and a text label.

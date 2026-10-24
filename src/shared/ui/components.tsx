@@ -16,6 +16,8 @@ type ButtonProps = ComponentProps<'button'> & {
   tone?: Tone;
   size?: 'sm' | 'md' | 'lg';
   block?: boolean;
+  /** Uppercase label (default). Turn off for longer labels. */
+  caps?: boolean;
 };
 
 /** Chunky button with a bottom "ledge" that presses down when clicked. */
@@ -23,6 +25,7 @@ export function Button({
   tone = 'neutral',
   size = 'md',
   block,
+  caps = true,
   className,
   type = 'button',
   ...props
@@ -31,7 +34,8 @@ export function Button({
     <button
       type={type}
       className={cx(
-        'inline-flex select-none items-center justify-center gap-2 rounded-xl border-2 border-b-4 font-extrabold uppercase tracking-wide transition-[transform,filter] duration-75',
+        'inline-flex select-none items-center justify-center gap-2 rounded-xl border-2 border-b-4 font-extrabold transition-[transform,filter] duration-75',
+        caps && 'uppercase tracking-wide',
         'hover:brightness-105 active:translate-y-[2px] active:border-b-2 disabled:cursor-not-allowed disabled:opacity-50 disabled:active:translate-y-0 disabled:active:border-b-4',
         size === 'sm' && 'px-3 py-1.5 text-xs',
         size === 'md' && 'px-4 py-2.5 text-sm',
