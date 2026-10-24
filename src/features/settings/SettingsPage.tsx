@@ -199,7 +199,9 @@ export function SettingsPage() {
                   }
                   className={cx(
                     'w-14 rounded-xl border-2 border-b-4 py-2 text-sm font-extrabold disabled:cursor-not-allowed disabled:opacity-40',
-                    on ? 'border-blue bg-blue-soft' : 'border-border bg-surface text-muted',
+                    on
+                      ? 'border-accent bg-accent-soft text-accent-text'
+                      : 'border-border bg-surface text-muted',
                   )}
                 >
                   {label}
@@ -322,7 +324,7 @@ export function SettingsPage() {
             Discard
           </Button>
           <Button
-            tone="green"
+            tone="accent"
             onClick={() => void save()}
             disabled={!dirty || !validation.success || status === 'saving'}
           >
@@ -392,7 +394,7 @@ function Choice({
     <label
       className={cx(
         'cursor-pointer rounded-xl border-2 border-b-4 px-3 py-1.5 text-sm font-extrabold',
-        checked ? 'border-blue bg-blue-soft' : 'border-border text-muted',
+        checked ? 'border-accent bg-accent-soft text-accent-text' : 'border-border text-muted',
       )}
     >
       <input type="radio" name={name} checked={checked} onChange={onChange} className="sr-only" />

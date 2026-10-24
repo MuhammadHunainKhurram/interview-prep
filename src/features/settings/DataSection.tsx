@@ -55,7 +55,7 @@ export function DataSection() {
 
       <div className="flex flex-wrap gap-2">
         <Button
-          tone="blue"
+          tone="accent"
           onClick={() =>
             void run(async () => {
               const { filename, text } = await send('backup/export', {});
@@ -104,7 +104,7 @@ export function DataSection() {
           <p className="mt-1 text-muted">A safety copy of your current data is saved first.</p>
           <div className="mt-3 flex gap-2">
             <Button
-              tone="blue"
+              tone="accent"
               size="sm"
               onClick={() =>
                 void run(async () => {

@@ -59,7 +59,7 @@ export function RestDaysSection() {
           onChange={(e) => setDay(e.target.value)}
           className="rounded-xl border-2 border-border bg-surface-2 px-3 py-2 font-bold"
         />
-        <Button type="submit" tone="blue" size="sm" disabled={!day || busy}>
+        <Button type="submit" tone="accent" size="sm" disabled={!day || busy}>
           Add rest day
         </Button>
       </form>

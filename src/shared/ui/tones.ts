@@ -5,7 +5,8 @@ export function cx(...classes: (string | false | null | undefined)[]): string {
   return classes.filter(Boolean).join(' ');
 }
 
-export type Tone = 'green' | 'blue' | 'yellow' | 'red' | 'neutral';
+/** `accent` is the app's own color; the others are semantic (outcomes, difficulty, status). */
+export type Tone = 'accent' | 'green' | 'blue' | 'yellow' | 'red' | 'neutral';
 
 export const DIFFICULTY_TONE: Record<Difficulty, Tone> = {
   Easy: 'green',

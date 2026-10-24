@@ -1,16 +1,26 @@
 /*
  * Design tokens shared by every surface (popup, dashboard, on-page widget).
  * Components only use these semantic names, never raw colors.
+ *
+ * Accent is purple so it never competes with the four outcome colors
+ * (blue = solved easily, green = solved, yellow = needed hints, red = didn't solve).
+ * Green only ever means success.
  */
 @theme inline {
   --color-bg: var(--ip-bg);
   --color-surface: var(--ip-surface);
   --color-surface-2: var(--ip-surface-2);
   --color-border: var(--ip-border);
+  --color-border-strong: var(--ip-border-strong);
   --color-text: var(--ip-text);
   --color-muted: var(--ip-muted);
   --color-faint: var(--ip-faint);
   --color-on-color: var(--ip-on-color);
+
+  --color-accent: var(--ip-accent);
+  --color-accent-shade: var(--ip-accent-shade);
+  --color-accent-soft: var(--ip-accent-soft);
+  --color-accent-text: var(--ip-accent-text);
 
   --color-green: var(--ip-green);
   --color-green-shade: var(--ip-green-shade);
@@ -39,68 +49,81 @@
 :root,
 :host {
   color-scheme: light;
-  --ip-bg: #f7f7f7;
+  --ip-bg: #f6f7f9;
   --ip-surface: #ffffff;
-  --ip-surface-2: #f1f3f4;
-  --ip-border: #e5e5e5;
-  --ip-text: #3c3c3c;
-  --ip-muted: #6f6f6f;
-  --ip-faint: #a3a3a3;
+  --ip-surface-2: #f0f2f5;
+  --ip-border: #e3e6ea;
+  --ip-border-strong: #d2d7dd;
+  --ip-text: #2b3137;
+  --ip-muted: #5f6b76;
+  --ip-faint: #9aa4ad;
   /* Dark text on bright fills keeps WCAG AA contrast (white on green is only ~2:1). */
-  --ip-on-color: #102028;
+  --ip-on-color: #14181c;
+
+  --ip-accent: #ce82ff;
+  --ip-accent-shade: #a35fd6;
+  --ip-accent-soft: #f5e8ff;
+  /* Accent used as text on surfaces: darker, for contrast. */
+  --ip-accent-text: #8441b8;
 
   --ip-green: #58cc02;
   --ip-green-shade: #46a302;
-  --ip-green-soft: #e6f8d6;
+  --ip-green-soft: #e8f8da;
   --ip-blue: #1cb0f6;
   --ip-blue-shade: #1899d6;
-  --ip-blue-soft: #dcf2fd;
+  --ip-blue-soft: #dff3fd;
   --ip-yellow: #ffc800;
   --ip-yellow-shade: #e0a800;
-  --ip-yellow-soft: #fff4cc;
+  --ip-yellow-soft: #fff5cf;
   --ip-red: #ff4b4b;
   --ip-red-shade: #ea2b2b;
-  --ip-red-soft: #ffe0e0;
+  --ip-red-soft: #ffe3e3;
   --ip-orange: #ff9600;
 
-  --ip-heat-0: #ebedf0;
-  --ip-heat-1: #c9f0a6;
-  --ip-heat-2: #8fdb4c;
-  --ip-heat-3: #58cc02;
-  --ip-heat-4: #3a8a00;
+  --ip-heat-0: #eceef1;
+  --ip-heat-1: #ecd9fb;
+  --ip-heat-2: #d7b2f6;
+  --ip-heat-3: #b47ae6;
+  --ip-heat-4: #8441b8;
 }
 
 [data-theme='dark'],
 :host([data-theme='dark']) {
   color-scheme: dark;
   --ip-bg: #131f24;
-  --ip-surface: #1a2b32;
-  --ip-surface-2: #22363f;
-  --ip-border: #37464f;
-  --ip-text: #f1f7fb;
-  --ip-muted: #a6b4bc;
-  --ip-faint: #6d7f88;
-  --ip-on-color: #0f1b20;
+  --ip-surface: #18272e;
+  --ip-surface-2: #213139;
+  --ip-border: #2c3c44;
+  --ip-border-strong: #3b4c55;
+  --ip-text: #eef3f6;
+  --ip-muted: #9fb0ba;
+  --ip-faint: #677a84;
+  --ip-on-color: #10181c;
+
+  --ip-accent: #ce82ff;
+  --ip-accent-shade: #9a5cc4;
+  --ip-accent-soft: #2c2440;
+  --ip-accent-text: #dcaaff;
 
   --ip-green: #58cc02;
   --ip-green-shade: #3f9a00;
-  --ip-green-soft: #1f3b17;
+  --ip-green-soft: #1e3519;
   --ip-blue: #1cb0f6;
   --ip-blue-shade: #1287bf;
-  --ip-blue-soft: #133548;
+  --ip-blue-soft: #14313f;
   --ip-yellow: #ffc800;
   --ip-yellow-shade: #c99d00;
-  --ip-yellow-soft: #3b3417;
+  --ip-yellow-soft: #352f18;
   --ip-red: #ff4b4b;
   --ip-red-shade: #c93636;
-  --ip-red-soft: #3f1f22;
+  --ip-red-soft: #3a1f22;
   --ip-orange: #ff9600;
 
-  --ip-heat-0: #22363f;
-  --ip-heat-1: #1d4d2a;
-  --ip-heat-2: #2c7a1a;
-  --ip-heat-3: #46a302;
-  --ip-heat-4: #7ee031;
+  --ip-heat-0: #213139;
+  --ip-heat-1: #3a2f55;
+  --ip-heat-2: #5c4288;
+  --ip-heat-3: #8d5fc2;
+  --ip-heat-4: #ce82ff;
 }
 
 @media (prefers-reduced-motion: reduce) {

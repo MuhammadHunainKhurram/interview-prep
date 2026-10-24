@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
-import { cx } from '@/shared/ui/tones';
+import { LogoMark } from '@/shared/ui/components';
 import { useRequest, useTheme } from '@/shared/ui/hooks';
+import { cx } from '@/shared/ui/tones';
 import { PAGES } from '../registry';
 
 function currentRoute(): string {
@@ -20,21 +21,22 @@ export function Dashboard() {
   }, []);
 
   const page = PAGES.find((p) => p.route === route) ?? PAGES[0]!;
-  useEffect(() => {
-    document.title = `${page.label} · Interview Prep`;
-  }, [page]);
-
   const Page = page.component;
+
   return (
     <div className="flex min-h-screen flex-col md:flex-row">
       <nav
         aria-label="Main"
-        className="border-b-2 border-border bg-surface md:sticky md:top-0 md:h-screen md:w-56 md:shrink-0 md:border-b-0 md:border-r-2"
+        className="border-b border-border bg-surface md:sticky md:top-0 md:h-screen md:w-60 md:shrink-0 md:border-b-0 md:border-r"
       >
-        <p className="hidden px-5 pb-4 pt-6 text-xl font-extrabold text-green md:block">
+        <a
+          href="#/home"
+          className="hidden items-center gap-2.5 px-5 pb-6 pt-6 text-[17px] font-extrabold md:flex"
+        >
+          <LogoMark size={28} />
           Interview Prep
-        </p>
-        <ul className="flex gap-1 overflow-x-auto p-2 md:flex-col md:p-3">
+        </a>
+        <ul className="flex gap-1 overflow-x-auto p-2 md:flex-col md:px-3 md:py-0">
           {PAGES.map((p) => {
             const Icon = p.icon;
             const active = p.route === page.route;
@@ -44,9 +46,9 @@ export function Dashboard() {
                   href={`#/${p.route}`}
                   aria-current={active ? 'page' : undefined}
                   className={cx(
-                    'flex items-center gap-3 whitespace-nowrap rounded-xl border-2 px-3 py-2.5 text-sm font-extrabold uppercase tracking-wide',
+                    'flex items-center gap-3 whitespace-nowrap rounded-xl border-2 px-3 py-2 text-[15px] font-bold',
                     active
-                      ? 'border-blue bg-blue-soft text-text'
+                      ? 'border-accent bg-accent-soft text-accent-text'
                       : 'border-transparent text-muted hover:bg-surface-2 hover:text-text',
                   )}
                 >
@@ -58,8 +60,11 @@ export function Dashboard() {
           })}
         </ul>
       </nav>
-      <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-6 md:px-8">
-        <h1 className="mb-6 text-2xl font-extrabold">{page.label}</h1>
+      <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-8 md:px-10">
+        <header className="mb-8">
+          <h1 className="text-[28px] font-extrabold leading-tight text-balance">{page.label}</h1>
+          <p className="mt-1 text-[15px] text-muted">{page.description}</p>
+        </header>
         <Page key={page.route} />
       </main>
     </div>

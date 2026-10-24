@@ -11,12 +11,20 @@ import {
 import { errorMessage, send } from '@/shared/messaging/client';
 import { AppError, type WidgetState } from '@/shared/messaging/contract';
 import { Badge, Button, DifficultyBadge, OutcomeBadge, OutcomeIcon } from '@/shared/ui/components';
-import { cx, OUTCOME_TONE } from '@/shared/ui/tones';
-import { formatClock, formatDuration, plural, relativeDay } from '@/shared/ui/format';
+import { formatClock, formatDuration, relativeDay } from '@/shared/ui/format';
 import { onStorageChange, useNow, useTheme } from '@/shared/ui/hooks';
-import { IconChevronDown, IconPause, IconPlay, IconReset, IconX } from '@/shared/ui/icons';
+import {
+  IconChevronDown,
+  IconChevronUp,
+  IconPause,
+  IconPlay,
+  IconReset,
+  IconX,
+} from '@/shared/ui/icons';
+import { cx } from '@/shared/ui/tones';
 
 const UNDO_MS = 5000;
+const Z_TOP = 2147483647;
 
 interface Saved {
   id: string;
@@ -29,6 +37,19 @@ interface StalePrompt {
   elapsedSec: number;
 }
 
+const SQUARE_TONE: Record<Outcome, string> = {
+  easy: 'bg-blue border-blue-shade',
+  solved: 'bg-green border-green-shade',
+  hints: 'bg-yellow border-yellow-shade',
+  failed: 'bg-red border-red-shade',
+};
+
+/**
+ * On-page tracker. Two pieces:
+ * - top right: the four outcome buttons, always visible, plus a toggle for details
+ *   (patterns, notes, history)
+ * - bottom left: the timer
+ */
 export function Widget({
   location,
   openSignal,
@@ -39,7 +60,7 @@ export function Widget({
   location: ProblemLocation;
   openSignal: number;
   host: HTMLElement;
-  /** Keeps the panel open when navigating between problems. */
+  /** Keeps the details panel open when navigating between problems. */
   defaultOpen: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
@@ -50,7 +71,6 @@ export function Widget({
   /** Null until edited: the problem's default patterns are used. */
   const [edited, setEdited] = useState<string[] | null>(null);
   const [notes, setNotes] = useState('');
-  const [showNotes, setShowNotes] = useState(false);
   const [saved, setSaved] = useState<Saved | null>(null);
   const [stale, setStale] = useState<StalePrompt | null>(null);
   const firstOutcomeRef = useRef<HTMLButtonElement>(null);
@@ -58,12 +78,7 @@ export function Widget({
   const patterns = edited ?? state?.defaultPatterns ?? [];
   const setPatterns = setEdited;
 
-  // Keyboard shortcut from the background: open (adjusting state during render).
-  const [seenSignal, setSeenSignal] = useState(openSignal);
-  if (openSignal !== seenSignal) {
-    setSeenSignal(openSignal);
-    setOpen(true);
-  }
+  // Keyboard shortcut from the background focuses the outcome buttons.
   useEffect(() => {
     if (openSignal > 0) requestAnimationFrame(() => firstOutcomeRef.current?.focus());
   }, [openSignal]);
@@ -123,6 +138,7 @@ export function Widget({
     if (!state || saving) return;
     setSaving(true);
     setError(null);
+    setSaved(null);
     try {
       await send('attempt/record', {
         id,
@@ -137,7 +153,6 @@ export function Widget({
       setStale(null);
       setSaved({ id, outcome });
       setNotes('');
-      setShowNotes(false);
       setEdited(null);
       load();
     } catch (e) {
@@ -157,52 +172,114 @@ export function Widget({
     load();
   }
 
-  const pillLabel = timer
-    ? formatClock(elapsedSec)
-    : state?.doneToday
-      ? 'Done today'
-      : state?.planRole === 'review'
-        ? 'Review'
-        : state?.planRole === 'new'
-          ? 'New'
-          : 'Track';
+  const running = timer?.status === 'running';
 
   return (
     <div className="ip-root">
+      {/* Top right: outcomes */}
       <div
         className="fixed right-4 top-[72px] flex flex-col items-end gap-2"
-        style={{ zIndex: 2147483647 }}
+        style={{ zIndex: Z_TOP }}
         onKeyDown={(e) => e.key === 'Escape' && setOpen(false)}
       >
-        <button
-          type="button"
-          onClick={() => setOpen((o) => !o)}
-          aria-expanded={open}
-          aria-label={`Interview Prep: ${pillLabel}`}
-          className="flex items-center gap-2 rounded-full border-2 border-b-4 border-border bg-surface px-3 py-1.5 text-sm font-extrabold text-text shadow-lg active:translate-y-[2px] active:border-b-2"
+        <div
+          role="toolbar"
+          aria-label="How did it go?"
+          className="flex items-center gap-1.5 rounded-2xl border border-border bg-surface p-1.5 text-text shadow-[0_8px_24px_rgb(0_0_0/0.18)]"
         >
-          <span
-            aria-hidden="true"
-            className={cx(
-              'size-2.5 rounded-full',
-              timer?.status === 'running'
-                ? 'animate-pulse bg-blue'
-                : state?.doneToday
-                  ? 'bg-green'
-                  : state?.planRole
-                    ? 'bg-yellow'
-                    : 'bg-faint',
+          {OUTCOMES.map((o, i) => (
+            <button
+              key={o}
+              ref={i === 0 ? firstOutcomeRef : undefined}
+              type="button"
+              title={OUTCOME_LABELS[o]}
+              aria-label={OUTCOME_LABELS[o]}
+              disabled={saving || !state}
+              onClick={() => void record(o)}
+              className={cx(
+                'flex size-9 items-center justify-center rounded-xl border-2 border-b-4 text-on-color transition-[transform,filter] duration-75',
+                'hover:brightness-105 active:translate-y-[2px] active:border-b-2 disabled:opacity-50',
+                SQUARE_TONE[o],
+              )}
+            >
+              <OutcomeIcon outcome={o} size={18} />
+            </button>
+          ))}
+          <span aria-hidden="true" className="mx-0.5 h-6 w-px bg-border" />
+          <button
+            type="button"
+            onClick={() => setOpen((v) => !v)}
+            aria-expanded={open}
+            aria-label={open ? 'Hide details' : 'Show details'}
+            title={open ? 'Hide details' : 'Pattern, notes and history'}
+            className="relative flex size-9 items-center justify-center rounded-xl text-muted hover:bg-surface-2 hover:text-text"
+          >
+            {open ? <IconChevronUp size={18} /> : <IconChevronDown size={18} />}
+            {state?.doneToday && (
+              <span
+                title="Done today"
+                className="absolute right-1 top-1 size-2 rounded-full bg-green"
+              />
             )}
-          />
-          <span className="tabular-nums">{pillLabel}</span>
-          <IconChevronDown size={14} className={cx('transition-transform', open && 'rotate-180')} />
-        </button>
+          </button>
+        </div>
+
+        {saved && (
+          <div
+            role="status"
+            className="flex items-center gap-3 rounded-xl border border-border bg-surface px-3 py-2 text-sm font-bold text-text shadow-lg"
+          >
+            <span className="flex items-center gap-2">
+              Saved <OutcomeBadge outcome={saved.outcome} />
+            </span>
+            <button
+              type="button"
+              onClick={() => void undo()}
+              className="font-extrabold text-accent-text hover:underline"
+            >
+              Undo
+            </button>
+          </div>
+        )}
+
+        {stale && (
+          <div
+            role="alertdialog"
+            aria-label="Long timer"
+            className="w-[320px] rounded-xl border border-yellow bg-surface p-3 text-sm text-text shadow-lg"
+          >
+            <p className="font-bold">
+              The timer ran for {formatDuration(stale.elapsedSec)}. Keep that time?
+            </p>
+            <div className="mt-2 flex gap-2">
+              <Button
+                size="sm"
+                tone="accent"
+                onClick={() => void record(stale.outcome, stale.id, 'keep')}
+              >
+                Keep time
+              </Button>
+              <Button size="sm" onClick={() => void record(stale.outcome, stale.id, 'discard')}>
+                Save without time
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {error && (
+          <p
+            role="alert"
+            className="w-[320px] rounded-xl border border-red bg-surface p-2.5 text-sm font-semibold text-text shadow-lg"
+          >
+            {error}
+          </p>
+        )}
 
         {open && (
           <div
-            role="dialog"
-            aria-label="Track this problem"
-            className="flex max-h-[calc(100vh-130px)] w-[320px] flex-col gap-4 overflow-y-auto rounded-2xl border-2 border-border bg-surface p-4 text-text shadow-2xl"
+            role="region"
+            aria-label="Problem details"
+            className="flex max-h-[calc(100vh-200px)] w-[320px] flex-col gap-4 overflow-y-auto rounded-2xl border border-border bg-surface p-4 text-text shadow-[0_8px_24px_rgb(0_0_0/0.18)]"
           >
             {!state && !error && <p className="text-muted">Loading…</p>}
             {state && (
@@ -212,10 +289,10 @@ export function Widget({
                     <h2 className="truncate text-base font-extrabold" title={state.problem.title}>
                       {state.problem.title}
                     </h2>
-                    <div className="mt-1 flex flex-wrap gap-1">
+                    <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1">
                       <DifficultyBadge difficulty={state.problem.difficulty} />
-                      {state.planRole === 'review' && <Badge tone="blue">Review today</Badge>}
-                      {state.planRole === 'new' && <Badge tone="green">New today</Badge>}
+                      {state.planRole === 'review' && <Badge tone="accent">Review today</Badge>}
+                      {state.planRole === 'new' && <Badge>New today</Badge>}
                       {state.doneToday && <Badge tone="green">Done today</Badge>}
                       {state.problem.unlisted && <Badge>Unlisted</Badge>}
                     </div>
@@ -223,52 +300,22 @@ export function Widget({
                   <button
                     type="button"
                     onClick={() => setOpen(false)}
-                    aria-label="Close"
+                    aria-label="Close details"
                     className="rounded-lg p-1 text-muted hover:bg-surface-2"
                   >
                     <IconX size={16} />
                   </button>
                 </header>
 
-                <section
-                  aria-label="Timer"
-                  className="flex items-center justify-between rounded-xl bg-surface-2 px-3 py-2"
-                >
-                  <span className="text-2xl font-extrabold tabular-nums" aria-live="off">
-                    {formatClock(elapsedSec)}
-                  </span>
-                  <div className="flex gap-2">
-                    {timer?.status === 'running' ? (
-                      <Button size="sm" onClick={() => void timerAction('timer/pause')}>
-                        <IconPause size={14} /> Pause
-                      </Button>
-                    ) : (
-                      <Button size="sm" tone="blue" onClick={() => void timerAction('timer/start')}>
-                        <IconPlay size={14} /> {timer ? 'Resume' : 'Start'}
-                      </Button>
-                    )}
-                    <Button
-                      size="sm"
-                      onClick={() => void timerAction('timer/reset')}
-                      disabled={!timer}
-                      aria-label="Reset timer"
-                    >
-                      <IconReset size={14} />
-                    </Button>
-                  </div>
-                </section>
-
-                <section aria-label="Patterns">
-                  <p className="mb-1.5 text-xs font-bold uppercase tracking-wide text-muted">
-                    Pattern
-                  </p>
+                <section aria-label="Pattern">
+                  <p className="mb-1.5 text-[13px] font-bold text-muted">Pattern</p>
                   <div className="flex flex-wrap gap-1.5">
                     {patterns.map((p) => (
                       <button
                         key={p}
                         type="button"
                         onClick={() => setPatterns(patterns.filter((x) => x !== p))}
-                        className="flex items-center gap-1 rounded-lg border border-blue bg-blue-soft px-2 py-0.5 text-xs font-bold"
+                        className="flex h-6 items-center gap-1 rounded-md bg-accent-soft px-2 text-xs font-bold text-accent-text"
                         aria-label={`Remove ${p}`}
                       >
                         {p} <IconX size={10} />
@@ -281,9 +328,9 @@ export function Widget({
                         onChange={(e) =>
                           e.target.value && setPatterns([...patterns, e.target.value])
                         }
-                        className="rounded-lg border border-border bg-surface px-1.5 py-0.5 text-xs font-bold text-muted"
+                        className="h-6 rounded-md border border-border-strong bg-surface px-1.5 text-xs font-bold text-muted"
                       >
-                        <option value="">+ Add</option>
+                        <option value="">Add pattern</option>
                         {ALL_PATTERNS.filter((p) => !patterns.includes(p)).map((p) => (
                           <option key={p} value={p}>
                             {p}
@@ -295,112 +342,36 @@ export function Widget({
                 </section>
 
                 <section aria-label="Notes">
-                  {showNotes ? (
-                    <>
-                      <label
-                        htmlFor="ip-notes"
-                        className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-muted"
-                      >
-                        Notes
-                      </label>
-                      <textarea
-                        id="ip-notes"
-                        value={notes}
-                        maxLength={LIMITS_RECORDS.notesMaxLength}
-                        onChange={(e) => setNotes(e.target.value)}
-                        rows={3}
-                        placeholder="Key idea, edge cases, complexity…"
-                        className="w-full resize-y rounded-xl border-2 border-border bg-surface-2 p-2 text-sm text-text placeholder:text-faint"
-                      />
-                      {notes.length > LIMITS_RECORDS.notesMaxLength - 500 && (
-                        <p className="text-right text-xs text-muted">
-                          {notes.length}/{LIMITS_RECORDS.notesMaxLength}
-                        </p>
-                      )}
-                    </>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => setShowNotes(true)}
-                      className="text-xs font-bold text-blue hover:underline"
-                    >
-                      + Add notes
-                    </button>
+                  <label
+                    htmlFor="ip-notes"
+                    className="mb-1.5 block text-[13px] font-bold text-muted"
+                  >
+                    Notes
+                  </label>
+                  <textarea
+                    id="ip-notes"
+                    value={notes}
+                    maxLength={LIMITS_RECORDS.notesMaxLength}
+                    onChange={(e) => setNotes(e.target.value)}
+                    rows={3}
+                    placeholder="Key idea, edge cases, complexity"
+                    className="w-full resize-y rounded-xl border border-border-strong bg-surface-2 p-2 text-sm text-text placeholder:text-faint"
+                  />
+                  {notes.length > LIMITS_RECORDS.notesMaxLength - 500 && (
+                    <p className="text-right text-xs text-muted">
+                      {notes.length}/{LIMITS_RECORDS.notesMaxLength}
+                    </p>
                   )}
+                  <p className="mt-1 text-xs text-muted">
+                    Pattern and notes are saved with the outcome you pick above.
+                  </p>
                 </section>
 
-                {stale ? (
-                  <section
-                    role="alertdialog"
-                    aria-label="Long timer"
-                    className="rounded-xl border-2 border-yellow bg-yellow-soft p-3 text-sm"
-                  >
-                    <p className="font-bold">
-                      The timer ran for {formatDuration(stale.elapsedSec)}. Keep that time?
-                    </p>
-                    <div className="mt-2 flex gap-2">
-                      <Button
-                        size="sm"
-                        tone="blue"
-                        onClick={() => void record(stale.outcome, stale.id, 'keep')}
-                      >
-                        Keep
-                      </Button>
-                      <Button
-                        size="sm"
-                        onClick={() => void record(stale.outcome, stale.id, 'discard')}
-                      >
-                        Don't save time
-                      </Button>
-                    </div>
-                  </section>
-                ) : (
-                  <section aria-label="How did it go?">
-                    <p className="mb-1.5 text-xs font-bold uppercase tracking-wide text-muted">
-                      How did it go?
-                    </p>
-                    <div className="grid grid-cols-2 gap-2">
-                      {OUTCOMES.map((o, i) => (
-                        <Button
-                          key={o}
-                          ref={i === 0 ? firstOutcomeRef : undefined}
-                          tone={OUTCOME_TONE[o]}
-                          size="sm"
-                          disabled={saving}
-                          onClick={() => void record(o)}
-                          caps={false}
-                        >
-                          <OutcomeIcon outcome={o} size={14} />
-                          {OUTCOME_LABELS[o]}
-                        </Button>
-                      ))}
-                    </div>
-                  </section>
-                )}
-
-                {saved && (
-                  <div
-                    role="status"
-                    className="flex items-center justify-between gap-2 rounded-xl bg-surface-2 px-3 py-2 text-sm"
-                  >
-                    <span className="flex items-center gap-2 font-bold">
-                      Saved <OutcomeBadge outcome={saved.outcome} />
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => void undo()}
-                      className="font-extrabold text-blue hover:underline"
-                    >
-                      Undo
-                    </button>
-                  </div>
-                )}
-
                 {state.status && (
-                  <dl className="grid grid-cols-3 gap-2 border-t-2 border-border pt-3 text-xs">
+                  <dl className="grid grid-cols-3 gap-2 border-t border-border pt-3 text-xs">
                     <div>
                       <dt className="text-muted">Last solved</dt>
-                      <dd className="font-bold">
+                      <dd className="mt-0.5 font-bold">
                         {state.status.lastSolvedAt
                           ? relativeDay(state.status.lastSolvedAt.slice(0, 10), state.today)
                           : 'Not yet'}
@@ -408,11 +379,11 @@ export function Widget({
                     </div>
                     <div>
                       <dt className="text-muted">Attempts</dt>
-                      <dd className="font-bold">{state.status.attemptCount}</dd>
+                      <dd className="mt-0.5 font-bold tabular-nums">{state.status.attemptCount}</dd>
                     </div>
                     <div>
                       <dt className="text-muted">Next review</dt>
-                      <dd className="font-bold">
+                      <dd className="mt-0.5 font-bold">
                         {relativeDay(state.status.nextReviewDay, state.today)}
                       </dd>
                     </div>
@@ -437,26 +408,48 @@ export function Widget({
                     </ul>
                   </details>
                 )}
-
-                {state.history.length > 0 && (
-                  <p className="text-xs text-muted">
-                    {plural(state.history.length, 'recent attempt')} · open the dashboard for full
-                    history
-                  </p>
-                )}
               </>
-            )}
-            {error && (
-              <p
-                role="alert"
-                className="rounded-xl border-2 border-red bg-red-soft p-2 text-sm font-semibold"
-              >
-                {error}
-              </p>
             )}
           </div>
         )}
       </div>
+
+      {/* Bottom left: timer */}
+      {state && (
+        <div
+          role="region"
+          aria-label="Timer"
+          className="fixed bottom-4 left-4 flex items-center gap-2 rounded-2xl border border-border bg-surface p-1.5 pl-3.5 text-text shadow-[0_8px_24px_rgb(0_0_0/0.18)]"
+          style={{ zIndex: Z_TOP }}
+        >
+          <span
+            aria-hidden="true"
+            className={cx('size-2 rounded-full', running ? 'animate-pulse bg-accent' : 'bg-faint')}
+          />
+          <span className="min-w-[3.5rem] text-lg font-extrabold tabular-nums">
+            {formatClock(elapsedSec)}
+          </span>
+          {running ? (
+            <Button size="sm" onClick={() => void timerAction('timer/pause')}>
+              <IconPause size={14} /> Pause
+            </Button>
+          ) : (
+            <Button size="sm" tone="accent" onClick={() => void timerAction('timer/start')}>
+              <IconPlay size={14} /> {timer ? 'Resume' : 'Start'}
+            </Button>
+          )}
+          <Button
+            size="sm"
+            onClick={() => void timerAction('timer/reset')}
+            disabled={!timer}
+            aria-label="Reset timer"
+            title="Reset timer"
+            square
+          >
+            <IconReset size={14} />
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

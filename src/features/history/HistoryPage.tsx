@@ -61,6 +61,7 @@ export function HistoryPage() {
             <div className="flex gap-2">
               <Button
                 size="sm"
+                square
                 onClick={() => setEditing(a)}
                 aria-label={`Edit attempt on ${a.problemTitle}`}
               >
@@ -68,6 +69,7 @@ export function HistoryPage() {
               </Button>
               <Button
                 size="sm"
+                square
                 onClick={() => setDeleting(a)}
                 aria-label={`Delete attempt on ${a.problemTitle}`}
               >
@@ -156,14 +158,12 @@ function EditDialog({ attempt, onClose }: { attempt: AttemptView; onClose: () =>
     <Modal title={`Edit attempt · ${attempt.problemTitle}`} onClose={onClose}>
       <div className="flex flex-col gap-4">
         <fieldset>
-          <legend className="mb-1.5 text-xs font-bold uppercase tracking-wide text-muted">
-            Outcome
-          </legend>
+          <legend className="mb-1.5 text-[13px] font-bold text-muted">Outcome</legend>
           <div className="grid grid-cols-2 gap-2">
             {OUTCOMES.map((o) => (
               <label
                 key={o}
-                className="flex cursor-pointer items-center gap-2 rounded-xl border-2 border-border p-2 text-sm font-bold has-[:checked]:border-blue has-[:checked]:bg-blue-soft"
+                className="flex cursor-pointer items-center gap-2 rounded-xl border-2 border-border p-2 text-sm font-bold has-[:checked]:border-accent has-[:checked]:bg-accent-soft"
               >
                 <input
                   type="radio"
@@ -178,7 +178,7 @@ function EditDialog({ attempt, onClose }: { attempt: AttemptView; onClose: () =>
         </fieldset>
 
         <fieldset>
-          <legend className="mb-1.5 text-xs font-bold uppercase tracking-wide text-muted">
+          <legend className="mb-1.5 text-[13px] font-bold text-muted">
             Patterns (up to {LIMITS_RECORDS.maxPatterns})
           </legend>
           <select
@@ -202,9 +202,7 @@ function EditDialog({ attempt, onClose }: { attempt: AttemptView; onClose: () =>
         </fieldset>
 
         <label className="flex flex-col gap-1.5">
-          <span className="text-xs font-bold uppercase tracking-wide text-muted">
-            Time (minutes)
-          </span>
+          <span className="text-[13px] font-bold text-muted">Time (minutes)</span>
           <input
             inputMode="numeric"
             value={minutes}
@@ -216,7 +214,7 @@ function EditDialog({ attempt, onClose }: { attempt: AttemptView; onClose: () =>
         </label>
 
         <label className="flex flex-col gap-1.5">
-          <span className="text-xs font-bold uppercase tracking-wide text-muted">Notes</span>
+          <span className="text-[13px] font-bold text-muted">Notes</span>
           <textarea
             value={notes}
             maxLength={LIMITS_RECORDS.notesMaxLength}
@@ -229,7 +227,7 @@ function EditDialog({ attempt, onClose }: { attempt: AttemptView; onClose: () =>
         {error && <ErrorNote message={error} />}
         <div className="flex justify-end gap-2">
           <Button onClick={onClose}>Cancel</Button>
-          <Button tone="green" onClick={() => void save()} disabled={saving || !!minutesError}>
+          <Button tone="accent" onClick={() => void save()} disabled={saving || !!minutesError}>
             Save
           </Button>
         </div>

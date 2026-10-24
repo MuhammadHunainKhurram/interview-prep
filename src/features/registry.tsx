@@ -18,6 +18,8 @@ export interface DashboardPage {
   /** URL hash route, e.g. "#/stats". */
   route: string;
   label: string;
+  /** One line under the page heading. */
+  description: string;
   icon: ComponentType<{ size?: number }>;
   component: ComponentType;
 }
@@ -27,10 +29,46 @@ export interface DashboardPage {
  * src/features/<name>/ and add an entry here. Nothing else needs to change.
  */
 export const PAGES: readonly DashboardPage[] = [
-  { route: 'home', label: 'Home', icon: IconHome, component: HomePage },
-  { route: 'problems', label: 'Problems', icon: IconList, component: ProblemsPage },
-  { route: 'reviews', label: 'Reviews', icon: IconRepeat, component: ReviewsPage },
-  { route: 'history', label: 'History', icon: IconClock, component: HistoryPage },
-  { route: 'stats', label: 'Stats', icon: IconChart, component: StatsPage },
-  { route: 'settings', label: 'Settings', icon: IconSettings, component: SettingsPage },
+  {
+    route: 'home',
+    label: 'Home',
+    description: "Today's plan, your streak and roadmap progress",
+    icon: IconHome,
+    component: HomePage,
+  },
+  {
+    route: 'problems',
+    label: 'Problems',
+    description: 'Every list in NeetCode roadmap order',
+    icon: IconList,
+    component: ProblemsPage,
+  },
+  {
+    route: 'reviews',
+    label: 'Reviews',
+    description: 'Problems coming back for a re-solve',
+    icon: IconRepeat,
+    component: ReviewsPage,
+  },
+  {
+    route: 'history',
+    label: 'History',
+    description: 'Every attempt you have logged',
+    icon: IconClock,
+    component: HistoryPage,
+  },
+  {
+    route: 'stats',
+    label: 'Stats',
+    description: 'How your practice is going',
+    icon: IconChart,
+    component: StatsPage,
+  },
+  {
+    route: 'settings',
+    label: 'Settings',
+    description: 'Your plan, rest days, reminders and data',
+    icon: IconSettings,
+    component: SettingsPage,
+  },
 ];

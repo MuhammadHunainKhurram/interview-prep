@@ -1,5 +1,5 @@
 /**
- * Draws the extension icon (green rounded square with a check mark) as PNGs in
+ * Draws the extension icon (purple rounded square with a check mark) as PNGs in
  * public/icon/. No image dependencies: pixels are rasterized with 4x4 supersampling
  * and encoded with node:zlib.
  *
@@ -12,8 +12,8 @@ import { deflateSync } from 'node:zlib';
 
 const OUT = resolve(dirname(fileURLToPath(import.meta.url)), '../public/icon');
 const SIZES = [16, 32, 48, 128];
-const GREEN = [0x58, 0xcc, 0x02];
-const SHADE = [0x46, 0xa3, 0x02];
+const ACCENT = [0xce, 0x82, 0xff];
+const SHADE = [0xa3, 0x5f, 0xd6];
 const MARK = [0xff, 0xff, 0xff];
 
 const CRC_TABLE = Array.from({ length: 256 }, (_, n) => {
@@ -97,7 +97,7 @@ function sample(u: number, v: number): number[] | null {
     distToSegment(u, v, ...check[1]!, ...check[2]!),
   );
   if (d < 0.085) return MARK;
-  return v > 0.9 ? SHADE : GREEN;
+  return v > 0.9 ? SHADE : ACCENT;
 }
 
 mkdirSync(OUT, { recursive: true });

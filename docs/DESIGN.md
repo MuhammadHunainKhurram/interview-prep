@@ -210,6 +210,11 @@ no mascots, no confetti storms, no sounds.
 - Big, clear progress bars per list and per roadmap section
 - One main action per screen ("Start today's plan"), lots of white space
 - Dark theme by default; color tokens defined once and shared by every surface
+- Purple is the app's accent (navigation, progress, primary buttons) so it never competes
+  with the four outcome colors; green only means success
+- Chunky pressable buttons carry the playful feel; containers stay flat with 1px borders
+- On problem pages the four outcome buttons are always visible as icon squares in the top
+  right (details open from a toggle next to them), and the timer sits in the bottom left
 - Accessible: WCAG AA contrast, keyboard navigable, visible focus rings, respects
   "reduce motion"
 

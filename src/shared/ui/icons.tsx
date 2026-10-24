@@ -79,6 +79,11 @@ export const IconChevronDown = (p: IconProps) => (
     <path d="M6 9l6 6 6-6" />
   </Icon>
 );
+export const IconChevronUp = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M6 15l6-6 6 6" />
+  </Icon>
+);
 export const IconHome = (p: IconProps) => (
   <Icon {...p}>
     <path d="M4 11l8-7 8 7v8a1 1 0 01-1 1h-4v-6H9v6H5a1 1 0 01-1-1z" />

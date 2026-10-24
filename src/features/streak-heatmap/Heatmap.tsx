@@ -100,7 +100,8 @@ export function Heatmap({ days }: { days: DayInfo[] }) {
                       className={cx(
                         'size-3 rounded-[3px]',
                         LEVEL_CLASS[level(d)],
-                        d.day === last.day && 'ring-2 ring-blue ring-offset-1 ring-offset-surface',
+                        d.day === last.day &&
+                          'ring-2 ring-accent ring-offset-1 ring-offset-surface',
                       )}
                     />
                   );

@@ -1,8 +1,9 @@
-import { problemHref } from '@/shared/ui/links';
 import type { TodayView } from '@/shared/messaging/contract';
 import { Badge, DifficultyBadge, OutcomeBadge } from '@/shared/ui/components';
-import { cx } from '@/shared/ui/tones';
+import { plural } from '@/shared/ui/format';
 import { IconCheck, IconExternal } from '@/shared/ui/icons';
+import { problemHref } from '@/shared/ui/links';
+import { cx } from '@/shared/ui/tones';
 
 /** Today's planned problems, each linking to the preferred site. */
 export function TodayList({ today, compact }: { today: TodayView; compact?: boolean }) {
@@ -17,31 +18,26 @@ export function TodayList({ today, compact }: { today: TodayView; compact?: bool
               href={href ?? undefined}
               target="_blank"
               rel="noopener noreferrer"
-              className={cx(
-                'group flex items-center gap-3 rounded-xl border-2 border-border px-3 py-2.5 transition-colors hover:bg-surface-2',
-                done && 'opacity-80',
-              )}
+              className="group flex items-center gap-3 rounded-xl border border-border bg-surface px-3 py-2.5 transition-colors hover:border-border-strong hover:bg-surface-2"
             >
               <span
                 aria-hidden="true"
                 className={cx(
-                  'flex size-7 shrink-0 items-center justify-center rounded-full border-2',
-                  done ? 'border-green bg-green text-on-color' : 'border-border text-transparent',
+                  'flex size-6 shrink-0 items-center justify-center rounded-full border-2',
+                  done ? 'border-green bg-green text-on-color' : 'border-border-strong',
                 )}
               >
-                <IconCheck size={14} />
+                {done && <IconCheck size={13} strokeWidth={3} />}
               </span>
               <span className="min-w-0 flex-1">
-                <span
-                  className={cx('block truncate font-bold', done && 'line-through decoration-2')}
-                >
+                <span className={cx('block truncate text-[15px] font-bold', done && 'text-muted')}>
                   {item.problem.title}
                 </span>
-                <span className="mt-0.5 flex flex-wrap items-center gap-1">
+                <span className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
                   {item.kind === 'review' ? (
-                    <Badge tone="blue">{item.early ? 'Early review' : 'Review'}</Badge>
+                    <Badge tone="accent">{item.early ? 'Early review' : 'Review'}</Badge>
                   ) : (
-                    <Badge tone="green">New</Badge>
+                    <Badge>New</Badge>
                   )}
                   {!compact && <DifficultyBadge difficulty={item.problem.difficulty} />}
                   {item.outcome && <OutcomeBadge outcome={item.outcome} />}
@@ -60,11 +56,13 @@ export function TodayList({ today, compact }: { today: TodayView; compact?: bool
 export function TodaySummary({ today }: { today: TodayView }) {
   const { problemsDone } = today.result;
   if (today.isRest)
-    return <p className="text-sm text-muted">Rest day. Your streak is safe, so enjoy the break.</p>;
+    return (
+      <p className="text-sm text-muted">Rest day. Your streak is safe, so take the day off.</p>
+    );
   if (today.result.goalMet)
     return (
-      <p className="text-sm font-bold text-text">
-        Goal met: {problemsDone} of {today.goal} done. Anything else is a bonus.
+      <p className="text-sm text-muted">
+        <span className="font-bold text-text">Goal met.</span> Anything else today is a bonus.
       </p>
     );
   const reviewsLeft = Math.max(
@@ -72,14 +70,13 @@ export function TodaySummary({ today }: { today: TodayView }) {
     Math.min(today.minReviews, today.items.filter((i) => i.kind === 'review').length) -
       today.result.reviewsDone,
   );
+  const left = Math.max(0, today.goal - problemsDone);
   return (
     <p className="text-sm text-muted">
-      <span className="font-bold text-text">
-        {problemsDone} of {today.goal} done.
-      </span>
-      {reviewsLeft > 0 && ` Includes at least ${reviewsLeft} review.`}
+      <span className="font-bold text-text">{plural(left, 'problem')} to go.</span>
+      {reviewsLeft > 0 && ` At least ${plural(reviewsLeft, 'review')} included.`}
       {today.deferredReviews > 0 &&
-        ` ${today.deferredReviews} more reviews are waiting and will roll over.`}
+        ` ${plural(today.deferredReviews, 'more review')} will roll over to tomorrow.`}
     </p>
   );
 }

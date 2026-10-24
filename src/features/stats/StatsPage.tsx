@@ -155,7 +155,7 @@ export function StatsPage() {
               </div>
               <ProgressBar
                 size="sm"
-                tone="blue"
+                tone="accent"
                 value={l.solved}
                 max={l.total}
                 label={`${LIST_LABELS[l.listId]} progress`}

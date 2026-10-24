@@ -50,7 +50,7 @@ export function ProblemsPage() {
             className={cx(
               'rounded-xl border-2 border-b-4 px-3 py-1.5 text-sm font-extrabold',
               active === t
-                ? 'border-blue bg-blue-soft text-text'
+                ? 'border-accent bg-accent-soft text-accent-text'
                 : 'border-border bg-surface text-muted hover:text-text',
             )}
           >

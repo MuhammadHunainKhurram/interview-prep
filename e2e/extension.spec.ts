@@ -9,59 +9,67 @@ test('tracks a solve from the widget through to the dashboard', async ({
   const page = await context.newPage();
   await page.goto('https://neetcode.io/problems/duplicate-integer');
 
-  const pill = page.getByRole('button', { name: /^Interview Prep:/ });
-  await expect(pill).toBeVisible();
-  await pill.click();
+  // Outcome buttons are visible without opening anything.
+  const outcomes = page.getByRole('toolbar', { name: 'How did it go?' });
+  await expect(outcomes.getByRole('button', { name: 'Solved easily' })).toBeVisible();
+  await expect(outcomes.getByRole('button', { name: "Didn't solve" })).toBeVisible();
+  if (SHOTS) await page.screenshot({ path: `${SHOTS}/widget-collapsed.png` });
 
-  const dialog = page.getByRole('dialog', { name: 'Track this problem' });
-  await expect(dialog.getByRole('heading', { name: 'Contains Duplicate' })).toBeVisible();
-  await expect(dialog.getByText('New today')).toBeVisible();
-  // NeetCode section is pre-selected as the pattern.
-  await expect(dialog.getByRole('button', { name: 'Remove Arrays & Hashing' })).toBeVisible();
-
-  await dialog.getByRole('button', { name: 'Start' }).click();
+  // Timer lives bottom-left.
+  const timer = page.getByRole('region', { name: 'Timer' });
+  await timer.getByRole('button', { name: 'Start' }).click();
   await page.waitForTimeout(1500);
-  await expect(dialog.getByText(/^0:0[1-9]$/)).toBeVisible();
+  await expect(timer.getByText(/^0:0[1-9]$/)).toBeVisible();
 
-  await dialog.getByRole('button', { name: '+ Add notes' }).click();
-  await dialog
+  // Details: pattern prefilled, notes.
+  await outcomes.getByRole('button', { name: 'Show details' }).click();
+  const details = page.getByRole('region', { name: 'Problem details' });
+  await expect(details.getByRole('heading', { name: 'Contains Duplicate' })).toBeVisible();
+  await expect(details.getByText('New today')).toBeVisible();
+  await expect(details.getByRole('button', { name: 'Remove Arrays & Hashing' })).toBeVisible();
+  await details
     .getByRole('textbox', { name: 'Notes' })
     .fill('Hash set; return early on the first repeat.');
   if (SHOTS) await page.screenshot({ path: `${SHOTS}/widget.png` });
 
-  await dialog.getByRole('button', { name: 'Solved', exact: true }).click();
-  await expect(dialog.getByRole('status')).toContainText('Saved');
-  await expect(dialog.getByText('Done today')).toBeVisible();
-  await expect(dialog.getByText('Attempts')).toBeVisible();
+  await outcomes.getByRole('button', { name: 'Solved', exact: true }).click();
+  await expect(page.getByRole('status')).toContainText('Saved');
+  await expect(details.getByText('Done today')).toBeVisible();
+  await expect(details.getByText('Attempts')).toBeVisible();
+  // Saving stops and clears the timer.
+  await expect(timer.getByRole('button', { name: 'Start' })).toBeVisible();
 
   // Dashboard reflects it.
   const dash = await context.newPage();
   await dash.goto(`chrome-extension://${extensionId}/dashboard.html`);
-  await expect(dash.getByText('1 of 3 done.')).toBeVisible();
+  await expect(dash.getByText('2 problems to go.')).toBeVisible();
+  await expect(dash).toHaveTitle('Interview Prep');
   if (SHOTS) await dash.screenshot({ path: `${SHOTS}/home.png`, fullPage: true });
 
   await dash.goto(`chrome-extension://${extensionId}/dashboard.html#/history`);
   await expect(dash.getByText('Hash set; return early on the first repeat.')).toBeVisible();
-  await expect(dash.getByText(/\d+s/).first()).toBeVisible();
+  await expect(dash).toHaveTitle('Interview Prep');
   if (SHOTS) await dash.screenshot({ path: `${SHOTS}/history.png`, fullPage: true });
 
-  // In-page navigation to another problem updates the widget.
-  // The panel stays open across navigation.
+  // In-page navigation to another problem updates the widget; details stay open.
   await page.evaluate(() => history.pushState({}, '', '/problems/is-anagram'));
-  await expect(page.getByRole('heading', { name: 'Valid Anagram' })).toBeVisible({ timeout: 5000 });
-  await expect(pill).toHaveAccessibleName('Interview Prep: New');
+  await expect(page.getByRole('heading', { name: 'Valid Anagram' })).toBeVisible({
+    timeout: 5000,
+  });
 });
 
 test('undo removes the attempt', async ({ context }) => {
   const page = await context.newPage();
   await page.goto('https://neetcode.io/problems/duplicate-integer');
-  await page.getByRole('button', { name: /^Interview Prep:/ }).click();
-  const dialog = page.getByRole('dialog', { name: 'Track this problem' });
-  await dialog.getByRole('button', { name: "Didn't solve" }).click();
-  await expect(dialog.getByText('Done today')).toBeVisible();
-  await dialog.getByRole('button', { name: 'Undo' }).click();
-  await expect(dialog.getByText('Done today')).toBeHidden();
-  await expect(dialog.getByText('New today')).toBeVisible();
+  const outcomes = page.getByRole('toolbar', { name: 'How did it go?' });
+  await outcomes.getByRole('button', { name: "Didn't solve" }).click();
+  await expect(page.getByRole('status')).toContainText("Didn't solve");
+  await outcomes.getByRole('button', { name: 'Show details' }).click();
+  const details = page.getByRole('region', { name: 'Problem details' });
+  await expect(details.getByText('Done today')).toBeVisible();
+  await page.getByRole('button', { name: 'Undo' }).click();
+  await expect(details.getByText('Done today')).toBeHidden();
+  await expect(details.getByText('New today')).toBeVisible();
 });
 
 test('settings reject out-of-range values', async ({ context, extensionId }) => {
