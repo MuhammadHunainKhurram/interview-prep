@@ -1,0 +1,16 @@
+{
+  "extends": "./.wxt/tsconfig.json",
+  "compilerOptions": {
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "allowImportingTsExtensions": true,
+    "jsx": "react-jsx",
+    "resolveJsonModule": true,
+    "types": ["node"]
+  },
+  "include": ["src", "scripts", "tests", "e2e", "*.config.ts", ".wxt/wxt.d.ts"]
+}
