@@ -121,9 +121,9 @@ describe('evaluateDay', () => {
   });
 
   it('accepts reviews done on either site', () => {
-    const day = history('a', [['2026-01-01', 'solved']]).map((a) => ({
+    const day: Attempt[] = history('a', [['2026-01-01', 'solved']]).map((a) => ({
       ...a,
-      site: 'leetcode' as const,
+      site: 'leetcode',
       isReview: true,
     }));
     day.push(attempt('b', '2026-01-01'));
